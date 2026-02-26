@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0005-messages" author="gfedorov">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="messages"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="messages">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="chat_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_id" type="BIGINT"/>
+            <column name="content" type="TEXT"/>
+            <column name="message_type" type="message_type" defaultValue="text"/>
+            <column name="reply_to_id" type="BIGINT"/>
+            <column name="is_edited" type="BOOLEAN" defaultValue="false"/>
+            <column name="is_deleted" type="BOOLEAN" defaultValue="false"/>
+            <column name="delivery_status" type="delivery_status" defaultValue="sent"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="messages"
+                baseColumnNames="chat_id"
+                referencedTableName="chats"
+                referencedColumnNames="id"
+                constraintName="fk_messages_chat"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="messages"
+                baseColumnNames="sender_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_messages_sender"
+                onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint
+                baseTableName="messages"
+                baseColumnNames="reply_to_id"
+                referencedTableName="messages"
+                referencedColumnNames="id"
+                constraintName="fk_messages_reply"
+                onDelete="SET NULL"/>
+
+        <createIndex tableName="messages" indexName="idx_messages_chat_created">
+            <column name="chat_id"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <createIndex tableName="messages" indexName="idx_messages_sender_id">
+            <column name="sender_id"/>
+        </createIndex>
+
+        <createIndex tableName="messages" indexName="idx_messages_created_at">
+            <column name="created_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="messages"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

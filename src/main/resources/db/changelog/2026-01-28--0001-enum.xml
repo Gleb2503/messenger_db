@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0001-enum" author="gfedorov">
+        <sql>
+            CREATE TYPE message_type AS ENUM ('text', 'image', 'video', 'audio', 'file', 'sticker', 'location', 'system');
+        </sql>
+        <sql>
+            CREATE TYPE notification_type AS ENUM ('new_message', 'friend_request', 'system', 'mention', 'group_invite');
+        </sql>
+        <sql>
+            CREATE TYPE chat_type AS ENUM ('private', 'group', 'channel');
+        </sql>
+        <sql>
+            CREATE TYPE member_role AS ENUM ('owner', 'admin', 'member');
+        </sql>
+        <sql>
+            CREATE TYPE delivery_status AS ENUM ('sent', 'delivered', 'read');
+        </sql>
+        <rollback>
+            <sql>
+                DROP TYPE IF EXISTS delivery_status;
+                DROP TYPE IF EXISTS member_role;
+                DROP TYPE IF EXISTS chat_type;
+                DROP TYPE IF EXISTS notification_type;
+                DROP TYPE IF EXISTS message_type;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0010-contacts" author="gfedorov">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="contacts"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="contacts">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contact_user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="nickname" type="VARCHAR(100)"/>
+            <column name="is_blocked" type="BOOLEAN" defaultValue="false"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="contacts" columnNames="user_id, contact_user_id"
+                             constraintName="uk_contacts_user_contact"/>
+
+        <addForeignKeyConstraint baseTableName="contacts" baseColumnNames="user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="fk_contacts_user" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="contacts" baseColumnNames="contact_user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="fk_contacts_contact_user" onDelete="CASCADE"/>
+
+        <createIndex tableName="contacts" indexName="idx_contacts_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="contacts"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

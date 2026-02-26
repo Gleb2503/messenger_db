@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0007-reactions" author="gfedorov">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="reactions"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="reactions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="message_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="emoji" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="reactions" columnNames="message_id, user_id, emoji"
+                             constraintName="uk_reactions_message_user_emoji"/>
+
+        <addForeignKeyConstraint baseTableName="reactions" baseColumnNames="message_id"
+                                 referencedTableName="messages" referencedColumnNames="id"
+                                 constraintName="fk_reactions_message" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="reactions" baseColumnNames="user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="fk_reactions_user" onDelete="CASCADE"/>
+
+        <createIndex tableName="reactions" indexName="idx_reactions_message_id">
+            <column name="message_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="reactions"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <include file="2026-01-28--0001-enum.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0002-users.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0003-chats.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0004-chat_members.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0005-messages.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0006-message_reads.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0007-reactions.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0008-attachments.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0009-notifications.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0010-contacts.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0011-user_settings.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0012-sessions.xml" relativeToChangelogFile="true"/>
+    <include file="2026-01-28--0013-chats_last_message_fk.xml" relativeToChangelogFile="true"/>
+</databaseChangeLog>

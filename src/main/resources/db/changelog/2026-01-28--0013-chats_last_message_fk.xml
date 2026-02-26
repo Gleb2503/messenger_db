@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0013-chats-last-message-fk" author="gfedorov">
+        <addForeignKeyConstraint
+                baseTableName="chats"
+                baseColumnNames="last_message_id"
+                referencedTableName="messages"
+                referencedColumnNames="id"
+                constraintName="fk_chats_last_message"
+                onDelete="SET NULL"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="chats" constraintName="fk_chats_last_message"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

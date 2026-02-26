@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0004-chat_members" author="gfedorov">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="chat_members"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="chat_members">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="chat_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="member_role" defaultValue="member"/>
+            <column name="joined_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="left_at" type="TIMESTAMP"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="is_muted" type="BOOLEAN" defaultValue="false"/>
+            <column name="is_pinned" type="BOOLEAN" defaultValue="false"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="chat_members"
+                columnNames="chat_id, user_id"
+                constraintName="uk_chat_members_chat_user"/>
+
+        <addForeignKeyConstraint
+                baseTableName="chat_members"
+                baseColumnNames="chat_id"
+                referencedTableName="chats"
+                referencedColumnNames="id"
+                constraintName="fk_chat_members_chat"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="chat_members"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_chat_members_user"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="chat_members" indexName="idx_chat_members_chat_id">
+            <column name="chat_id"/>
+        </createIndex>
+
+        <createIndex tableName="chat_members" indexName="idx_chat_members_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="chat_members" indexName="idx_chat_members_is_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="chat_members"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

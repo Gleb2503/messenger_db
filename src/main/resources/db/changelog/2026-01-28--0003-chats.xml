@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-28-0003-chats" author="gfedorov">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="chats"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="chats">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="type" type="chat_type">
+                <constraints nullable="false"/>
+            </column>
+            <column name="avatar_url" type="VARCHAR(255)"/>
+            <column name="created_by" type="BIGINT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="last_message_id" type="BIGINT"/>
+            <column name="last_message_time" type="TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="chats"
+                baseColumnNames="created_by"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_chats_created_by"
+                onDelete="SET NULL"/>
+
+        <createIndex tableName="chats" indexName="idx_chats_type">
+            <column name="type"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="chats"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
