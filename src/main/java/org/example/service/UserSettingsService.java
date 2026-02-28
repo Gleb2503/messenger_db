@@ -5,7 +5,6 @@ import org.example.repository.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Optional;
 
 @Service
@@ -14,6 +13,14 @@ import java.util.Optional;
 public class UserSettingsService {
 
     private final UserSettingsRepository userSettingsRepository;
+
+    public Iterable<UserSettings> getAllSettings() {
+        return userSettingsRepository.findAll();
+    }
+
+    public Optional<UserSettings> getSettingsById(Long id) {
+        return userSettingsRepository.findById(id);
+    }
 
     public Optional<UserSettings> getSettingsByUserId(Long userId) {
         return userSettingsRepository.findByUser_Id(userId);

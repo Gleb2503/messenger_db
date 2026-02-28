@@ -1,11 +1,17 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.enums.NotificationType;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "notifications")
 public class Notification {
 
@@ -13,40 +19,29 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(nullable = false, length = 30)
     private NotificationType type;
 
-    @Column(name = "title", nullable = false, length = 100)
+    @Column(length = 200)
     private String title;
 
-    @Column(name = "body", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String body;
 
-    @Column(name = "entity_id")
     private Long entityId;
 
-    @Column(name = "entity_type", length = 50)
+    @Column(length = 50)
     private String entityType;
 
-    @Column(name = "is_read")
-    private Boolean isRead;
+    @Column(nullable = false)
+    private Boolean isRead = false;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "read_at")
     private LocalDateTime readAt;
-
-    public enum NotificationType {
-        new_message,
-        friend_request,
-        system,
-        mention,
-        group_invite
-    }
 }

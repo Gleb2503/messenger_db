@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.entity.ChatMember;
 import org.example.repository.ChatMemberRepository;
+import org.example.enums.MemberRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,7 @@ public class ChatMemberService {
     }
 
     @Transactional
-    public ChatMember updateMemberRole(Long id, ChatMember.MemberRole role) {
+    public ChatMember updateMemberRole(Long id, MemberRole role) {
         ChatMember member = chatMemberRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
         member.setRole(role);

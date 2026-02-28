@@ -1,0 +1,15 @@
+package org.example.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+@Data
+@Schema(description = "Запрос на отметку прочтения сообщения")
+public class CreateMessageReadRequest {
+
+    @Schema(description = "ID сообщения", example = "1")
+    private Long messageId;
+
+    @Schema(description = "ID пользователя", example = "2")
+    private Long userId;
+}

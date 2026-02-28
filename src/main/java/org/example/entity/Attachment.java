@@ -1,11 +1,16 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "attachments")
 public class Attachment {
 
@@ -13,25 +18,24 @@ public class Attachment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "message_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "message_id")
+    @JsonIgnore
     private Message message;
 
-    @Column(name = "file_url", nullable = false, length = 255)
+    @Column(nullable = false, length = 500)
     private String fileUrl;
 
-    @Column(name = "file_name", length = 255)
+    @Column(nullable = false, length = 255)
     private String fileName;
 
-    @Column(name = "file_size")
     private Long fileSize;
 
-    @Column(name = "file_type", length = 50)
+    @Column(length = 100)
     private String fileType;
 
-    @Column(name = "thumbnail_url", length = 255)
+    @Column(length = 500)
     private String thumbnailUrl;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

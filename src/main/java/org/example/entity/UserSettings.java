@@ -1,11 +1,17 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.enums.Theme;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "user_settings")
 public class UserSettings {
 
@@ -13,28 +19,27 @@ public class UserSettings {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
-    @Column(name = "push_enabled")
-    private Boolean pushEnabled;
+    @Column(nullable = false)
+    private Boolean pushEnabled = true;
 
-    @Column(name = "email_enabled")
-    private Boolean emailEnabled;
+    @Column(nullable = false)
+    private Boolean emailEnabled = true;
 
-    @Column(name = "sound_enabled")
-    private Boolean soundEnabled;
+    @Column(nullable = false)
+    private Boolean soundEnabled = true;
 
-    @Column(name = "theme", length = 20)
-    private String theme;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Theme theme;
 
-    @Column(name = "language", length = 10)
+    @Column(length = 10)
     private String language;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

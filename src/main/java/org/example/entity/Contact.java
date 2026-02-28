@@ -1,11 +1,16 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "contacts")
 public class Contact {
 
@@ -13,20 +18,21 @@ public class Contact {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "contact_user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_user_id")
+    @JsonIgnore
     private User contactUser;
 
-    @Column(name = "nickname", length = 100)
+    @Column(length = 100)
     private String nickname;
 
-    @Column(name = "is_blocked")
-    private Boolean isBlocked;
+    @Column(nullable = false)
+    private Boolean isBlocked = false;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

@@ -20,16 +20,16 @@ public class SessionService {
         return sessionRepository.findAll();
     }
 
+    public Optional<Session> getSessionById(Long id) {
+        return sessionRepository.findById(id);
+    }
+
     public List<Session> getSessionsByUserId(Long userId) {
         return sessionRepository.findByUser_Id(userId);
     }
 
     public List<Session> getActiveSessionsByUserId(Long userId) {
         return sessionRepository.findByUser_IdAndIsActive(userId, true);
-    }
-
-    public Optional<Session> getSessionById(Long id) {
-        return sessionRepository.findById(id);
     }
 
     @Transactional
@@ -54,6 +54,11 @@ public class SessionService {
                 .orElseThrow(() -> new RuntimeException("Session not found"));
         session.setIsActive(false);
         sessionRepository.save(session);
+    }
+
+    @Transactional
+    public void deleteSession(Long id) {
+        sessionRepository.deleteById(id);
     }
 
     @Transactional

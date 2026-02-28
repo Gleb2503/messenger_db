@@ -1,12 +1,18 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.enums.ChatType;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "chats")
 public class Chat {
 
@@ -14,42 +20,36 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", length = 100)
+    @Column(length = 100)
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(nullable = false, length = 20)
     private ChatType type;
 
-    @Column(name = "avatar_url", length = 255)
+    @Column(length = 255)
     private String avatarUrl;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id")
+    @JsonIgnore
     private User createdBy;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_message_id")
+    @JsonIgnore
     private Message lastMessage;
 
-    @Column(name = "last_message_time")
     private LocalDateTime lastMessageTime;
 
-    @OneToMany(mappedBy = "chat", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMember> members;
 
-    @OneToMany(mappedBy = "chat", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Message> messages;
-
-    public enum ChatType {
-        private_chat,
-        group,
-        channel
-    }
 }

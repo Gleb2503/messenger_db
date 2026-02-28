@@ -1,11 +1,16 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "sessions")
 public class Session {
 
@@ -13,31 +18,27 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
-    @Column(name = "device_name", length = 100)
+    @Column(length = 100)
     private String deviceName;
 
-    @Column(name = "device_type", length = 50)
+    @Column(length = 20)
     private String deviceType;
 
-    @Column(name = "ip_address", length = 45)
+    @Column(length = 50)
     private String ipAddress;
 
-    @Column(name = "user_agent", columnDefinition = "TEXT")
+    @Column(length = 500)
     private String userAgent;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
-    @Column(name = "last_active_at")
     private LocalDateTime lastActiveAt;
-
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 }

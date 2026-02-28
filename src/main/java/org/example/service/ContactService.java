@@ -5,6 +5,8 @@ import org.example.repository.ContactRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.example.exeption.ResourceNotFoundException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -19,20 +21,16 @@ public class ContactService {
         return contactRepository.findAll();
     }
 
+    public Optional<Contact> getContactById(Long id) {
+        return contactRepository.findById(id);
+    }
+
     public List<Contact> getContactsByUserId(Long userId) {
         return contactRepository.findByUser_Id(userId);
     }
 
     public List<Contact> getBlockedContacts(Long userId) {
-        return contactRepository.findByUser_IdAndIsBlocked(userId, true);
-    }
-
-    public Optional<Contact> getContactById(Long id) {
-        return contactRepository.findById(id);
-    }
-
-    public Optional<Contact> getContactByUserAndContactUser(Long userId, Long contactUserId) {
-        return contactRepository.findByUser_IdAndContactUser_Id(userId, contactUserId);
+        return contactRepository.findByUser_IdAndIsBlockedTrue(userId);
     }
 
     @Transactional
@@ -41,35 +39,26 @@ public class ContactService {
     }
 
     @Transactional
-    public Contact updateContactNickname(Long id, String nickname) {
+    public Contact blockContact(Long id) {
         Contact contact = contactRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contact not found"));
-        contact.setNickname(nickname);
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + id));
+        contact.setIsBlocked(true);
         return contactRepository.save(contact);
     }
 
     @Transactional
-    public Contact blockContact(Long userId, Long contactUserId) {
-        return contactRepository.findByUser_IdAndContactUser_Id(userId, contactUserId)
-                .map(contact -> {
-                    contact.setIsBlocked(true);
-                    return contactRepository.save(contact);
-                })
-                .orElseThrow(() -> new RuntimeException("Contact not found"));
-    }
-
-    @Transactional
-    public Contact unblockContact(Long userId, Long contactUserId) {
-        return contactRepository.findByUser_IdAndContactUser_Id(userId, contactUserId)
-                .map(contact -> {
-                    contact.setIsBlocked(false);
-                    return contactRepository.save(contact);
-                })
-                .orElseThrow(() -> new RuntimeException("Contact not found"));
+    public Contact unblockContact(Long id) {
+        Contact contact = contactRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + id));
+        contact.setIsBlocked(false);
+        return contactRepository.save(contact);
     }
 
     @Transactional
     public void deleteContact(Long id) {
+        if (!contactRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Contact not found with id: " + id);
+        }
         contactRepository.deleteById(id);
     }
 }

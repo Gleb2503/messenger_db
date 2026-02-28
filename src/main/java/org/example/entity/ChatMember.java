@@ -1,11 +1,17 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.enums.MemberRole;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "chat_members")
 public class ChatMember {
 
@@ -13,36 +19,29 @@ public class ChatMember {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_id")
+    @JsonIgnore
     private Chat chat;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
+    @Column(nullable = false, length = 20)
     private MemberRole role;
 
-    @Column(name = "joined_at")
-    private LocalDateTime joinedAt;
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
-    @Column(name = "left_at")
+    private LocalDateTime joinedAt;
     private LocalDateTime leftAt;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isMuted = false;
 
-    @Column(name = "is_muted")
-    private Boolean isMuted;
-
-    @Column(name = "is_pinned")
-    private Boolean isPinned;
-
-    public enum MemberRole {
-        owner,
-        admin,
-        member
-    }
+    @Column(nullable = false)
+    private Boolean isPinned = false;
 }

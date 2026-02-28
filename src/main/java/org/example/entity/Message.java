@@ -1,12 +1,19 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.enums.DeliveryStatus;
+import org.example.enums.MessageType;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "messages")
 public class Message {
 
@@ -14,61 +21,50 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_id")
+    @JsonIgnore
     private Chat chat;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
+    @JsonIgnore
     private User sender;
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "message_type")
+    @Column(nullable = false, length = 20)
     private MessageType messageType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reply_to_id")
+    @JsonIgnore
     private Message replyTo;
 
-    @Column(name = "is_edited")
-    private Boolean isEdited;
+    @Column(nullable = false)
+    private Boolean isEdited = false;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "delivery_status")
+    @Column(length = 20)
     private DeliveryStatus deliveryStatus;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "message", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Attachment> attachments;
 
-    @OneToMany(mappedBy = "message", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reaction> reactions;
 
-    public enum MessageType {
-        text,
-        image,
-        video,
-        audio,
-        file,
-        sticker,
-        location,
-        system
-    }
-
-    public enum DeliveryStatus {
-        sent,
-        delivered,
-        read
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MessageRead> reads;
 }
