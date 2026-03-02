@@ -1,1 +1,0 @@
-{"error":"Internal Server Error","message":"Required request body is missing: public org.springframework.http.ResponseEntity<org.example.entity.ChatMember> org.example.controller.ChatMemberController.addMember(org.example.entity.ChatMember)","timestamp":"2026-03-01T12:48:57.3853953","status":500}

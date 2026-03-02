@@ -2,14 +2,11 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.dto.AuthRequest;
-import org.example.dto.AuthResponse;
+import org.example.dto.Auth.AuthRequest;
+import org.example.dto.Auth.AuthResponse;
 import org.example.entity.User;
 import org.example.enums.UserStatus;
 import org.example.repository.UserRepository;
