@@ -274,7 +274,11 @@ API использует **JWT (JSON Web Token)** для защиты эндпо
 
 ---
 
+<<<<<<< HEAD
 ### Обзор
+=======
+###  Обзор
+>>>>>>> 0cb4328290d657fef550e97e74bab532a015a464
 
 | Параметр | Значение |
 |----------|----------|
@@ -404,4 +408,4 @@ API использует **JWT (JSON Web Token)** для защиты эндпо
 ##  Авторы
 - **Gleb Fedorov** — Backend-разработка, архитектура, API  
   - [GitHub](https://github.com/Gleb2503) 
-  -  [Telegram](https://t.me/hlebusheka)
+  - [Telegram](https://t.me/hlebusheka)
