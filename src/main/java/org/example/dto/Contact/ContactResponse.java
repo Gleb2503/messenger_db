@@ -2,35 +2,28 @@ package org.example.dto.Contact;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.example.dto.User.UserDTO;
 import java.time.LocalDateTime;
 
 @Data
-@Schema(description = "Информация о контакте")
+@Schema(description = "Ответ с информацией о контакте")
 public class ContactResponse {
 
-    @Schema(description = "Уникальный идентификатор", example = "1")
+    @Schema(description = "ID контакта", example = "1")
     private Long id;
 
-    @Schema(description = "Информация о пользователе")
-    private UserInfo user;
+    @Schema(description = "Пользователь")
+    private UserDTO user;
 
-    @Schema(description = "Информация о контактируемом")
-    private UserInfo contactUser;
+    @Schema(description = "Контактный пользователь")
+    private UserDTO contactUser;
 
     @Schema(description = "Псевдоним", example = "Маша Дизайн")
     private String nickname;
 
-    @Schema(description = "Заблокирован ли", example = "false")
+    @Schema(description = "Заблокирован ли контакт", example = "false")
     private Boolean isBlocked;
 
-    @Schema(description = "Дата добавления", example = "2026-02-28T08:49:11.243Z")
+    @Schema(description = "Дата добавления", example = "2026-03-03T14:00:00")
     private LocalDateTime createdAt;
-
-    @Data
-    @Schema(description = "Краткая информация о пользователе")
-    public static class UserInfo {
-        private Long id;
-        private String username;
-        private String displayName;
-    }
 }

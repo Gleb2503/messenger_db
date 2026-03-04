@@ -3,13 +3,29 @@ package org.example.repository;
 import org.example.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
-    Optional<User> findByApiKey(String apiKey);
+
+
+    List<User> findTop100ByOrderByCreatedAtDesc();
+
+
+    List<User> findByUsernameContaining(String username);
+
+
+    List<User> findByEmailContaining(String email);
+
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+
+    Optional<User> findByApiKey(String apiKey);
+
+    boolean existsByApiKey(String apiKey);
 }

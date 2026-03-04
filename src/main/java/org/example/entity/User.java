@@ -43,32 +43,14 @@ public class User {
     @Column(length = 20)
     private UserStatus status;
 
-    @Column(length = 64, unique = true)
+    @Column(length = 64)
     private String apiKey;
+
+    private LocalDateTime apiKeyExpiresAt;
 
     private LocalDateTime lastSeen;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDateTime apiKeyExpiresAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (apiKey == null) {
-            generateApiKey();
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public void generateApiKey() {
-        this.apiKey = "mk_" + UUID.randomUUID().toString().replace("-", "");
-        this.apiKeyExpiresAt = LocalDateTime.now().plusYears(1);
-    }
 
     @JsonIgnore
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -93,4 +75,9 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Session> sessions;
+
+    public void generateApiKey() {
+        this.apiKey = UUID.randomUUID().toString().replace("-", "");
+        this.apiKeyExpiresAt = LocalDateTime.now().plusDays(30);
+    }
 }

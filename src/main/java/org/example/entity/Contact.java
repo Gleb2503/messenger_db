@@ -31,8 +31,6 @@ public class Contact {
     @Column(length = 100)
     private String nickname;
 
-    @Column(nullable = false)
-    private Boolean isBlocked = false;
-
+    private Boolean isBlocked;
     private LocalDateTime createdAt;
 }

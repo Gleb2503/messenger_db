@@ -3,15 +3,15 @@ package org.example.repository;
 import org.example.entity.MessageRead;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface MessageReadsRepository extends JpaRepository<MessageRead, Long> {
 
-    List<MessageRead> findByMessage_Id(Long messageId);
+    List<MessageRead> findTop100ByUserIdOrderByReadAtDesc(Long userId);
 
-    List<MessageRead> findByUser_Id(Long userId);
+    List<MessageRead> findTop100ByMessageIdOrderByReadAtDesc(Long messageId);
 
-    Optional<MessageRead> findByMessage_IdAndUser_Id(Long messageId, Long userId);
+    boolean existsByUserIdAndMessageId(Long userId, Long messageId);
 }

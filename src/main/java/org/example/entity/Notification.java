@@ -25,13 +25,13 @@ public class Notification {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(length = 30, columnDefinition = "varchar(30)")
     private NotificationType type;
 
     @Column(length = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     private String body;
 
     private Long entityId;
@@ -39,9 +39,7 @@ public class Notification {
     @Column(length = 50)
     private String entityType;
 
-    @Column(nullable = false)
-    private Boolean isRead = false;
-
+    private Boolean isRead;
     private LocalDateTime createdAt;
     private LocalDateTime readAt;
 }

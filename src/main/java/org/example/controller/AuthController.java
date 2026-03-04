@@ -69,7 +69,7 @@ public class AuthController {
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setRefreshToken(refreshToken);
-        response.setApiKey(savedUser.getApiKey());
+        // ❌ УДАЛЕНО: response.setApiKey(savedUser.getApiKey());
         response.setExpiresIn(86400L);
         response.setId(savedUser.getId());
         response.setUsername(savedUser.getUsername());
@@ -103,7 +103,6 @@ public class AuthController {
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setRefreshToken(refreshToken);
-        response.setApiKey(user.getApiKey());
         response.setExpiresIn(86400L);
         response.setId(user.getId());
         response.setUsername(user.getUsername());

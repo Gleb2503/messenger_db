@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.enums.Theme;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,18 +23,12 @@ public class UserSettings {
     @JsonIgnore
     private User user;
 
-    @Column(nullable = false)
-    private Boolean pushEnabled = true;
+    private Boolean pushEnabled;
+    private Boolean emailEnabled;
+    private Boolean soundEnabled;
 
-    @Column(nullable = false)
-    private Boolean emailEnabled = true;
-
-    @Column(nullable = false)
-    private Boolean soundEnabled = true;
-
-    @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private Theme theme;
+    private String theme;
 
     @Column(length = 10)
     private String language;

@@ -1,92 +1,38 @@
 package org.example.dto.MessageRead;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import org.example.entity.MessageRead;
+import org.example.entity.Message;
+import org.example.entity.User;
+import java.time.LocalDateTime;
 
-@Schema(
-        description = "Запрос на отметку прочтения сообщения"
-)
+@Data
+@Schema(description = "Запрос на отметку прочтения")
 public class CreateMessageReadRequest {
-    @Schema(
-            description = "ID сообщения",
-            example = "1"
-    )
+
+    @Schema(description = "ID сообщения", example = "1")
     private Long messageId;
-    @Schema(
-            description = "ID пользователя",
-            example = "2"
-    )
+
+    @Schema(description = "ID пользователя", example = "1")
     private Long userId;
 
-    public CreateMessageReadRequest() {
-    }
+    public MessageRead toEntity() {
+        MessageRead messageRead = new MessageRead();
 
-    public Long getMessageId() {
-        return this.messageId;
-    }
-
-    public Long getUserId() {
-        return this.userId;
-    }
-
-    public void setMessageId(final Long messageId) {
-        this.messageId = messageId;
-    }
-
-    public void setUserId(final Long userId) {
-        this.userId = userId;
-    }
-
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof CreateMessageReadRequest)) {
-            return false;
-        } else {
-            CreateMessageReadRequest other = (CreateMessageReadRequest)o;
-            if (!other.canEqual(this)) {
-                return false;
-            } else {
-                Object this$messageId = this.getMessageId();
-                Object other$messageId = other.getMessageId();
-                if (this$messageId == null) {
-                    if (other$messageId != null) {
-                        return false;
-                    }
-                } else if (!this$messageId.equals(other$messageId)) {
-                    return false;
-                }
-
-                Object this$userId = this.getUserId();
-                Object other$userId = other.getUserId();
-                if (this$userId == null) {
-                    if (other$userId != null) {
-                        return false;
-                    }
-                } else if (!this$userId.equals(other$userId)) {
-                    return false;
-                }
-
-                return true;
-            }
+        if (this.messageId != null) {
+            Message message = new Message();
+            message.setId(this.messageId);
+            messageRead.setMessage(message);
         }
-    }
 
-    protected boolean canEqual(final Object other) {
-        return other instanceof CreateMessageReadRequest;
-    }
+        if (this.userId != null) {
+            User user = new User();
+            user.setId(this.userId);
+            messageRead.setUser(user);
+        }
 
-    public int hashCode() {
-        boolean PRIME = true;
-        int result = 1;
-        Object $messageId = this.getMessageId();
-        result = result * 59 + ($messageId == null ? 43 : $messageId.hashCode());
-        Object $userId = this.getUserId();
-        result = result * 59 + ($userId == null ? 43 : $userId.hashCode());
-        return result;
-    }
-
-    public String toString() {
-        Long var10000 = this.getMessageId();
-        return "CreateMessageReadRequest(messageId=" + var10000 + ", userId=" + this.getUserId() + ")";
+        messageRead.setReadAt(LocalDateTime.now());
+        return messageRead;
     }
 }

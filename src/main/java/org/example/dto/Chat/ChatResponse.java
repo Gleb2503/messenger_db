@@ -2,38 +2,39 @@ package org.example.dto.Chat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.example.dto.User.UserDTO;
+import org.example.dto.Message.MessageDTO;
+import org.example.enums.ChatType;
 import java.time.LocalDateTime;
 
 @Data
-@Schema(description = "Информация о чате")
+@Schema(description = "Ответ с информацией о чате")
 public class ChatResponse {
 
-    @Schema(description = "Уникальный идентификатор", example = "1")
+    @Schema(description = "ID чата", example = "1")
     private Long id;
 
     @Schema(description = "Название чата", example = "Рабочий чат команды")
     private String name;
 
-    @Schema(description = "Тип чата", example = "group")
-    private String type;
+    @Schema(description = "Тип чата", example = "group", allowableValues = {"private_chat", "group", "channel"})
+    private ChatType type;
 
-    @Schema(description = "URL аватара", example = "https://example.com/chat-avatar.jpg")
+    @Schema(description = "URL аватара", example = "https://example.com/chat.jpg")
     private String avatarUrl;
 
     @Schema(description = "Создатель чата")
-    private UserInfo createdBy;
+    private UserDTO createdBy;
 
-    @Schema(description = "Дата создания", example = "2026-02-28T08:49:11.243Z")
+    @Schema(description = "Дата создания", example = "2026-03-03T14:00:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "Время последнего сообщения", example = "2026-02-28T08:49:11.243Z")
+    @Schema(description = "Дата обновления")
+    private LocalDateTime updatedAt;
+
+    @Schema(description = "Время последнего сообщения")
     private LocalDateTime lastMessageTime;
 
-    @Data
-    @Schema(description = "Краткая информация о пользователе")
-    public static class UserInfo {
-        private Long id;
-        private String username;
-        private String displayName;
-    }
+    @Schema(description = "Последнее сообщение")
+    private MessageDTO lastMessage;
 }

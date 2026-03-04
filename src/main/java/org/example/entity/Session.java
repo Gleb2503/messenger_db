@@ -26,19 +26,14 @@ public class Session {
     @Column(length = 100)
     private String deviceName;
 
-    @Column(length = 20)
-    private String deviceType;
-
     @Column(length = 50)
     private String ipAddress;
 
     @Column(length = 500)
     private String userAgent;
 
-    @Column(nullable = false)
-    private Boolean isActive = true;
-
-    private LocalDateTime lastActiveAt;
+    private Boolean isActive;
     private LocalDateTime createdAt;
+    private LocalDateTime lastActiveAt;
     private LocalDateTime expiresAt;
 }

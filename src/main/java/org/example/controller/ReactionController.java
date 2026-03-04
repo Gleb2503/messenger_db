@@ -2,15 +2,12 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.entity.Reaction;
+import org.example.dto.Reaction.ReactionResponse;
+import org.example.dto.Reaction.CreateReactionRequest;
 import org.example.service.ReactionService;
-import org.example.exeption.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,110 +23,67 @@ public class ReactionController {
 
     private final ReactionService reactionService;
 
-    @GetMapping
-    @Operation(summary = "Получить все реакции")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Reaction.class))),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
-    })
-    public ResponseEntity<List<Reaction>> getAllReactions() {
-        return ResponseEntity.ok(reactionService.getAllReactions());
-    }
-
-    @GetMapping("/{id}")
-    @Operation(summary = "Получить реакцию по ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Реакция найдена"),
-            @ApiResponse(responseCode = "404", description = "Реакция не найдена")
-    })
-    public ResponseEntity<Reaction> getReactionById(
-            @Parameter(description = "Уникальный идентификатор реакции", required = true, example = "1")
-            @PathVariable Long id) {
-        return reactionService.getReactionById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Reaction not found with id: " + id));
-    }
-
     @GetMapping("/message/{messageId}")
-    @Operation(summary = "Получить реакции на сообщение")
+    @Operation(summary = "Получить последние 100 реакций сообщения")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": 1,
-                        "message": {"id": 1},
-                        "user": {"id": 2, "username": "maria_design"},
-                        "emoji": "👍",
-                        "createdAt": "2026-02-27T17:35:00"
-                      },
-                      {
-                        "id": 2,
-                        "message": {"id": 1},
-                        "user": {"id": 3, "username": "petr_dev"},
-                        "emoji": "❤️",
-                        "createdAt": "2026-02-27T17:36:00"
-                      }
-                    ]
-                    """))),
-            @ApiResponse(responseCode = "404", description = "Сообщение не найдено")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<Reaction>> getReactionsByMessageId(
-            @Parameter(description = "Уникальный идентификатор сообщения", required = true, example = "1")
+    public ResponseEntity<List<ReactionResponse>> getLast100ReactionsByMessage(
+            @Parameter(description = "ID сообщения", required = true, example = "1")
             @PathVariable Long messageId) {
-        return ResponseEntity.ok(reactionService.getReactionsByMessageId(messageId));
+        List<ReactionResponse> response = reactionService.getLast100ReactionsByMessage(messageId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Получить реакции пользователя")
+    @Operation(summary = "Получить последние 100 реакций пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<Reaction>> getReactionsByUserId(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
+    public ResponseEntity<List<ReactionResponse>> getLast100ReactionsByUser(
+            @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable Long userId) {
-        return ResponseEntity.ok(reactionService.getReactionsByUserId(userId));
+        List<ReactionResponse> response = reactionService.getLast100ReactionsByUser(userId);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
     @Operation(summary = "Добавить реакцию")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Реакция успешно добавлена",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Reaction.class),
-                            examples = @ExampleObject(value = """
-                    {
-                      "id": 1,
-                      "message": {"id": 1},
-                      "user": {"id": 2, "username": "maria_design"},
-                      "emoji": "👍",
-                      "createdAt": "2026-02-27T17:35:00"
-                    }
-                    """))),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "404", description = "Сообщение или пользователь не найден"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "201", description = "Реакция добавлена"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
     })
-    public ResponseEntity<Reaction> addReaction(
-            @Parameter(description = "Данные для создания реакции", required = true)
-            @RequestBody Reaction reaction) {
-        return ResponseEntity.ok(reactionService.addReaction(reaction));
+    public ResponseEntity<ReactionResponse> addReaction(
+            @Parameter(description = "Данные реакции", required = true)
+            @RequestBody CreateReactionRequest request) {
+        ReactionResponse response = reactionService.addReaction(request);
+        return ResponseEntity.status(201).body(response);
+    }
+
+    @DeleteMapping("/message/{messageId}/user/{userId}")
+    @Operation(summary = "Удалить реакцию пользователя на сообщение")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Реакция удалена")
+    })
+    public ResponseEntity<Void> removeReaction(
+            @Parameter(description = "ID сообщения", required = true, example = "1")
+            @PathVariable Long messageId,
+            @Parameter(description = "ID пользователя", required = true, example = "1")
+            @PathVariable Long userId) {
+        reactionService.removeReaction(messageId, userId);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить реакцию")
+    @Operation(summary = "Удалить реакцию по ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Реакция успешно удалена"),
+            @ApiResponse(responseCode = "204", description = "Реакция удалена"),
             @ApiResponse(responseCode = "404", description = "Реакция не найдена")
     })
-    public ResponseEntity<Void> removeReaction(
-            @Parameter(description = "Уникальный идентификатор реакции", required = true, example = "1")
+    public ResponseEntity<Void> deleteReaction(
+            @Parameter(description = "ID реакции", required = true, example = "1")
             @PathVariable Long id) {
-        reactionService.removeReaction(id);
+        reactionService.deleteReaction(id);
         return ResponseEntity.noContent().build();
     }
 }

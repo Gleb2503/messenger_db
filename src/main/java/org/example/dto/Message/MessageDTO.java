@@ -1,17 +1,19 @@
 package org.example.dto.Message;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import java.time.LocalDateTime;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Schema(description = "Информация о сообщении")
 public class MessageDTO {
+
+    @Schema(description = "ID сообщения", example = "1")
     private Long id;
-    private Long chatId;
-    private Long senderId;
+
+    @Schema(description = "Содержимое", example = "Привет всем!")
     private String content;
-    private String messageType;
-    private Boolean isEdited;
-    private Boolean isDeleted;
-    private String deliveryStatus;
-    private LocalDateTime createdAt;
 }

@@ -2,15 +2,12 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.entity.MessageRead;
+import org.example.dto.MessageRead.MessageReadResponse;
+import org.example.dto.MessageRead.CreateMessageReadRequest;
 import org.example.service.MessageReadService;
-import org.example.exeption.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,110 +18,56 @@ import java.util.List;
 @RequestMapping("/api/message-reads")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Message Reads", description = "Статусы прочтения сообщений")
+@Tag(name = "MessageReads", description = "Статусы прочтения сообщений")
 public class MessageReadController {
 
     private final MessageReadService messageReadService;
 
-    @GetMapping
-    @Operation(summary = "Получить все статусы прочтения")
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Получить последние 100 прочтений пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = MessageRead.class))),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<MessageRead>> getAllReads() {
-        return ResponseEntity.ok(messageReadService.getAllReads());
-    }
-
-    @GetMapping("/{id}")
-    @Operation(summary = "Получить статус по ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Статус найден"),
-            @ApiResponse(responseCode = "404", description = "Статус не найден")
-    })
-    public ResponseEntity<MessageRead> getReadById(
-            @Parameter(description = "Уникальный идентификатор статуса", required = true, example = "1")
-            @PathVariable Long id) {
-        return messageReadService.getReadById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Read status not found with id: " + id));
+    public ResponseEntity<List<MessageReadResponse>> getLast100ReadsByUser(
+            @Parameter(description = "ID пользователя", required = true, example = "1")
+            @PathVariable Long userId) {
+        List<MessageReadResponse> response = messageReadService.getLast100ReadsByUser(userId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/message/{messageId}")
-    @Operation(summary = "Получить кто прочитал сообщение")
+    @Operation(summary = "Получить последние 100 прочтений сообщения")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": 1,
-                        "message": {"id": 1},
-                        "user": {"id": 2, "username": "maria_design"},
-                        "readAt": "2026-02-27T17:40:00"
-                      },
-                      {
-                        "id": 2,
-                        "message": {"id": 1},
-                        "user": {"id": 3, "username": "petr_dev"},
-                        "readAt": "2026-02-27T17:42:00"
-                      }
-                    ]
-                    """))),
-            @ApiResponse(responseCode = "404", description = "Сообщение не найдено")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<MessageRead>> getReadsByMessageId(
-            @Parameter(description = "Уникальный идентификатор сообщения", required = true, example = "1")
+    public ResponseEntity<List<MessageReadResponse>> getLast100ReadsByMessage(
+            @Parameter(description = "ID сообщения", required = true, example = "1")
             @PathVariable Long messageId) {
-        return ResponseEntity.ok(messageReadService.getReadsByMessageId(messageId));
+        List<MessageReadResponse> response = messageReadService.getLast100ReadsByMessage(messageId);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Получить прочитанные пользователем")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    public ResponseEntity<List<MessageRead>> getReadsByUserId(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
-            @PathVariable Long userId) {
-        return ResponseEntity.ok(messageReadService.getReadsByUserId(userId));
-    }
-
-    @PostMapping("/mark")
+    @PostMapping
     @Operation(summary = "Отметить сообщение как прочитанное")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Статус успешно обновлен",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = MessageRead.class),
-                            examples = @ExampleObject(value = """
-                    {
-                      "id": 1,
-                      "message": {"id": 1},
-                      "user": {"id": 2},
-                      "readAt": "2026-02-27T17:40:00"
-                    }
-                    """))),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "404", description = "Сообщение или пользователь не найден"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "201", description = "Прочтение записано"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
     })
-    public ResponseEntity<MessageRead> markAsRead(
-            @Parameter(description = "Данные для отметки прочтения", required = true)
-            @RequestBody MessageRead messageRead) {
-        return ResponseEntity.ok(messageReadService.markAsRead(messageRead.getMessage().getId(), messageRead.getUser().getId()));
+    public ResponseEntity<MessageReadResponse> markAsRead(
+            @Parameter(description = "Данные прочтения", required = true)
+            @RequestBody CreateMessageReadRequest request) {
+        MessageReadResponse response = messageReadService.markAsRead(request);
+        return ResponseEntity.status(201).body(response);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить статус прочтения")
+    @Operation(summary = "Удалить запись о прочтении")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Статус успешно удален"),
-            @ApiResponse(responseCode = "404", description = "Статус не найден")
+            @ApiResponse(responseCode = "204", description = "Запись удалена"),
+            @ApiResponse(responseCode = "404", description = "Запись не найдена")
     })
     public ResponseEntity<Void> deleteRead(
-            @Parameter(description = "Уникальный идентификатор статуса", required = true, example = "1")
+            @Parameter(description = "ID записи", required = true, example = "1")
             @PathVariable Long id) {
         messageReadService.deleteRead(id);
         return ResponseEntity.noContent().build();

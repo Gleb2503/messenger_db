@@ -2,12 +2,11 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.dto.ChatMember.CreateChatMemberRequest;
+import org.example.dto.ChatMember.ChatMemberResponse;
 import org.example.entity.ChatMember;
 import org.example.service.ChatMemberService;
 import org.example.exeption.ResourceNotFoundException;
@@ -16,147 +15,117 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chat-members")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Chat Members", description = "Управление участниками чатов")
+@Tag(name = "ChatMembers", description = "Участники чатов")
 public class ChatMemberController {
 
     private final ChatMemberService chatMemberService;
 
-    @GetMapping
-    @Operation(summary = "Получить всех участников")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ChatMember.class))),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
-    })
-    public ResponseEntity<List<ChatMember>> getAllMembers() {
-        return ResponseEntity.ok(chatMemberService.getAllMembers());
-    }
-
-    @GetMapping("/{id}")
-    @Operation(summary = "Получить участника по ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Участник найден"),
-            @ApiResponse(responseCode = "404", description = "Участник не найден")
-    })
-    public ResponseEntity<ChatMember> getMemberById(
-            @Parameter(description = "Уникальный идентификатор участника", required = true, example = "1")
-            @PathVariable Long id) {
-        return chatMemberService.getMemberById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + id));
-    }
-
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Получить чаты пользователя")
+    @Operation(summary = "Получить последние 100 чатов пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<ChatMember>> getMembersByUserId(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
+    public ResponseEntity<List<ChatMemberResponse>> getLast100ChatsByUser(
+            @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable Long userId) {
-        return ResponseEntity.ok(chatMemberService.getMembersByUserId(userId));
+        List<ChatMember> members = chatMemberService.getLast100MembersByUser(userId);
+        List<ChatMemberResponse> response = members.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/chat/{chatId}")
-    @Operation(summary = "Получить участники чата")
+    @Operation(summary = "Получить последних 100 участников чата")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": 1,
-                        "chat": {"id": 2, "name": "Рабочий чат"},
-                        "user": {"id": 1, "username": "ivan_dev"},
-                        "role": "owner",
-                        "isActive": true,
-                        "joinedAt": "2026-02-27T17:10:00"
-                      },
-                      {
-                        "id": 2,
-                        "chat": {"id": 2, "name": "Рабочий чат"},
-                        "user": {"id": 2, "username": "maria_design"},
-                        "role": "admin",
-                        "isActive": true,
-                        "joinedAt": "2026-02-27T17:15:00"
-                      },
-                      {
-                        "id": 3,
-                        "chat": {"id": 2, "name": "Рабочий чат"},
-                        "user": {"id": 5, "username": "new_member"},
-                        "role": "member",
-                        "isActive": true,
-                        "joinedAt": "2026-02-27T17:45:00"
-                      }
-                    ]
-                    """))),
-            @ApiResponse(responseCode = "404", description = "Чат не найден")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<ChatMember>> getMembersByChatId(
-            @Parameter(description = "Уникальный идентификатор чата", required = true, example = "2")
+    public ResponseEntity<List<ChatMemberResponse>> getLast100MembersByChat(
+            @Parameter(description = "ID чата", required = true, example = "1")
             @PathVariable Long chatId) {
-        return ResponseEntity.ok(chatMemberService.getMembersByChatId(chatId));
-    }
-
-    @GetMapping("/chat/{chatId}/user/{userId}")
-    @Operation(summary = "Проверить участника")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Участник найден"),
-            @ApiResponse(responseCode = "404", description = "Участник не найден")
-    })
-    public ResponseEntity<ChatMember> getMemberByChatAndUser(
-            @Parameter(description = "Уникальный идентификатор чата", required = true, example = "2")
-            @PathVariable Long chatId,
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
-            @PathVariable Long userId) {
-        return chatMemberService.getMemberByChatAndUser(chatId, userId)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+        List<ChatMember> members = chatMemberService.getLast100MembersByChat(chatId);
+        List<ChatMemberResponse> response = members.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    @Operation(summary = "Добавить участника")
+    @Operation(summary = "Добавить участника в чат")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Участник успешно добавлен",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ChatMember.class),
-                            examples = @ExampleObject(value = """
-                    {
-                      "id": 1,
-                      "chat": {"id": 2, "name": "Рабочий чат"},
-                      "user": {"id": 5, "username": "new_member"},
-                      "role": "member",
-                      "isActive": true,
-                      "joinedAt": "2026-02-27T17:45:00"
-                    }
-                    """))),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "404", description = "Чат или пользователь не найден"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "201", description = "Участник добавлен"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
     })
-    public ResponseEntity<ChatMember> addMember(
-            @Parameter(description = "Данные для создания участника", required = true)
-            @RequestBody ChatMember chatMember) {
-        return ResponseEntity.ok(chatMemberService.addMember(chatMember));
+    public ResponseEntity<ChatMemberResponse> addMember(
+            @Parameter(description = "Данные участника", required = true)
+            @RequestBody CreateChatMemberRequest request) {
+        ChatMember member = chatMemberService.addMember(request.toEntity());
+        return ResponseEntity.status(201).body(convertToResponse(member));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить участника")
+    @Operation(summary = "Удалить участника из чата")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Участник успешно удален"),
+            @ApiResponse(responseCode = "204", description = "Участник удалён"),
             @ApiResponse(responseCode = "404", description = "Участник не найден")
     })
     public ResponseEntity<Void> removeMember(
-            @Parameter(description = "Уникальный идентификатор участника", required = true, example = "1")
+            @Parameter(description = "ID участника", required = true, example = "1")
             @PathVariable Long id) {
         chatMemberService.removeMember(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/role")
+    @Operation(summary = "Обновить роль участника")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Роль обновлена"),
+            @ApiResponse(responseCode = "404", description = "Участник не найден")
+    })
+    public ResponseEntity<ChatMemberResponse> updateRole(
+            @Parameter(description = "ID участника", required = true, example = "1")
+            @PathVariable Long id,
+            @Parameter(description = "Новая роль", required = true, example = "admin")
+            @RequestParam String role) {
+        ChatMember member = chatMemberService.updateRole(id, role);
+        return ResponseEntity.ok(convertToResponse(member));
+    }
+
+    private ChatMemberResponse convertToResponse(ChatMember member) {
+        ChatMemberResponse response = new ChatMemberResponse();
+        response.setId(member.getId());
+        response.setRole(member.getRole());
+        response.setIsActive(member.getIsActive());
+        response.setJoinedAt(member.getJoinedAt());
+        response.setLeftAt(member.getLeftAt());
+        response.setIsMuted(member.getIsMuted());
+        response.setIsPinned(member.getIsPinned());
+
+        if (member.getChat() != null) {
+            response.setChat(new org.example.dto.Chat.ChatDTO(
+                    member.getChat().getId(),
+                    member.getChat().getName()
+            ));
+        }
+
+        if (member.getUser() != null) {
+            response.setUser(convertUserToDTO(member.getUser()));
+        }
+
+        return response;
+    }
+
+    private org.example.dto.User.UserDTO convertUserToDTO(org.example.entity.User user) {
+        org.example.dto.User.UserDTO dto = new org.example.dto.User.UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        return dto;
     }
 }

@@ -2,54 +2,43 @@ package org.example.dto.Message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.example.dto.Chat.ChatDTO;
+import org.example.dto.User.UserDTO;
+import org.example.enums.MessageType;
+import org.example.enums.DeliveryStatus;
 import java.time.LocalDateTime;
 
 @Data
-@Schema(description = "Информация о сообщении")
+@Schema(description = "Ответ с информацией о сообщении")
 public class MessageResponse {
 
-    @Schema(description = "Уникальный идентификатор", example = "1")
+    @Schema(description = "ID сообщения", example = "1")
     private Long id;
 
-    @Schema(description = "Информация о чате")
-    private ChatInfo chat;
+    @Schema(description = "Чат")
+    private ChatDTO chat;
 
-    @Schema(description = "Информация об отправителе")
-    private UserInfo sender;
+    @Schema(description = "Отправитель")
+    private UserDTO sender;
 
-    @Schema(description = "Текст сообщения", example = "Привет всем!")
+    @Schema(description = "Содержимое", example = "Привет всем!")
     private String content;
 
     @Schema(description = "Тип сообщения", example = "text")
-    private String messageType;
+    private MessageType messageType;
 
-    @Schema(description = "Было ли отредактировано", example = "false")
+    @Schema(description = "Отредактировано ли", example = "false")
     private Boolean isEdited;
 
-    @Schema(description = "Было ли удалено", example = "false")
+    @Schema(description = "Удалено ли", example = "false")
     private Boolean isDeleted;
 
-    @Schema(description = "Статус доставки", example = "sent", allowableValues = {"sent", "delivered", "read"})
-    private String deliveryStatus;
+    @Schema(description = "Статус доставки", example = "sent")
+    private DeliveryStatus deliveryStatus;
 
-    @Schema(description = "Дата создания", example = "2026-02-28T08:49:11.243Z")
+    @Schema(description = "Дата создания", example = "2026-03-03T14:00:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "Дата обновления", example = "2026-02-28T08:49:11.243Z")
+    @Schema(description = "Дата обновления")
     private LocalDateTime updatedAt;
-
-    @Data
-    @Schema(description = "Краткая информация о чате")
-    public static class ChatInfo {
-        private Long id;
-        private String name;
-    }
-
-    @Data
-    @Schema(description = "Краткая информация о пользователе")
-    public static class UserInfo {
-        private Long id;
-        private String username;
-        private String displayName;
-    }
 }

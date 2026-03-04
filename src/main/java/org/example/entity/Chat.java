@@ -24,7 +24,7 @@ public class Chat {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20, columnDefinition = "varchar(20)")
     private ChatType type;
 
     @Column(length = 255)

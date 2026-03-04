@@ -7,24 +7,22 @@ import lombok.Data;
 @Schema(description = "Ответ с токенами аутентификации")
 public class AuthResponse {
 
-    @Schema(description = "JWT токен доступа")
+    @Schema(description = "JWT токен доступа", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     private String token;
 
-    @Schema(description = "JWT токен обновления")
+    @Schema(description = "JWT токен обновления", example = "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...")
     private String refreshToken;
 
-    @Schema(description = "Персональный API ключ")
-    private String apiKey;
-
-    @Schema(description = "Время жизни токена в секундах")
+    @Schema(description = "Время жизни токена в секундах", example = "86400")
     private long expiresIn;
 
-    @Schema(description = "ID пользователя")
+    @Schema(description = "ID пользователя", example = "1")
     private Long id;
 
-    @Schema(description = "Имя пользователя")
+    @Schema(description = "Имя пользователя", example = "ivan_dev")
     private String username;
 
-    @Schema(description = "Email пользователя")
+    @Schema(description = "Email пользователя", example = "ivan@example.com")
     private String email;
+
 }

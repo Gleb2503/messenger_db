@@ -2,12 +2,11 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.dto.Session.SessionResponse;
+import org.example.dto.Session.CreateSessionRequest;
 import org.example.entity.Session;
 import org.example.service.SessionService;
 import org.example.exeption.ResourceNotFoundException;
@@ -16,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -26,16 +26,19 @@ public class SessionController {
 
     private final SessionService sessionService;
 
-    @GetMapping
-    @Operation(summary = "Получить все сессии")
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Получить последние 100 сессий пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Session.class))),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<Session>> getAllSessions() {
-        return ResponseEntity.ok(sessionService.getAllSessions());
+    public ResponseEntity<List<SessionResponse>> getLast100SessionsByUser(
+            @Parameter(description = "ID пользователя", required = true, example = "1")
+            @PathVariable Long userId) {
+        List<Session> sessions = sessionService.getLast100SessionsByUser(userId);
+        List<SessionResponse> response = sessions.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -44,111 +47,87 @@ public class SessionController {
             @ApiResponse(responseCode = "200", description = "Сессия найдена"),
             @ApiResponse(responseCode = "404", description = "Сессия не найдена")
     })
-    public ResponseEntity<Session> getSessionById(
-            @Parameter(description = "Уникальный идентификатор сессии", required = true, example = "1")
+    public ResponseEntity<SessionResponse> getSessionById(
+            @Parameter(description = "ID сессии", required = true, example = "1")
             @PathVariable Long id) {
-        return sessionService.getSessionById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Session not found with id: " + id));
-    }
-
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Получить сессии пользователя")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    public ResponseEntity<List<Session>> getSessionsByUserId(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
-            @PathVariable Long userId) {
-        return ResponseEntity.ok(sessionService.getSessionsByUserId(userId));
-    }
-
-    @GetMapping("/user/{userId}/active")
-    @Operation(summary = "Получить активные сессии")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": 1,
-                        "user": {"id": 1},
-                        "deviceName": "Chrome on Windows",
-                        "deviceType": "desktop",
-                        "isActive": true,
-                        "lastActiveAt": "2026-02-27T17:50:00"
-                      },
-                      {
-                        "id": 2,
-                        "user": {"id": 1},
-                        "deviceName": "Safari on iPhone",
-                        "deviceType": "mobile",
-                        "isActive": true,
-                        "lastActiveAt": "2026-02-27T17:45:00"
-                      }
-                    ]
-                    """))),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
-    })
-    public ResponseEntity<List<Session>> getActiveSessionsByUserId(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
-            @PathVariable Long userId) {
-        return ResponseEntity.ok(sessionService.getActiveSessionsByUserId(userId));
+        Session session = sessionService.getSessionById(id);
+        return ResponseEntity.ok(convertToResponse(session));
     }
 
     @PostMapping
-    @Operation(summary = "Создать сессию")
+    @Operation(summary = "Создать новую сессию")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Сессия успешно создана",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Session.class),
-                            examples = @ExampleObject(value = """
-                    {
-                      "id": 1,
-                      "user": {"id": 1, "username": "ivan_dev"},
-                      "deviceName": "Chrome on Windows",
-                      "deviceType": "desktop",
-                      "ipAddress": "192.168.1.100",
-                      "isActive": true,
-                      "lastActiveAt": "2026-02-27T17:50:00",
-                      "createdAt": "2026-02-27T17:50:00",
-                      "expiresAt": "2026-03-23T14:00:00"
-                    }
-                    """))),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "201", description = "Сессия создана"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
     })
-    public ResponseEntity<Session> createSession(
-            @Parameter(description = "Данные для создания сессии", required = true)
-            @RequestBody Session session) {
-        return ResponseEntity.ok(sessionService.createSession(session));
+    public ResponseEntity<SessionResponse> createSession(
+            @Parameter(description = "Данные сессии", required = true)
+            @RequestBody CreateSessionRequest request) {
+        Session session = sessionService.createSession(request.toEntity());
+        return ResponseEntity.status(201).body(convertToResponse(session));
     }
 
-    @PutMapping("/{id}/logout")
-    @Operation(summary = "Выйти из сессии")
+    @PutMapping("/{id}/active")
+    @Operation(summary = "Обновить время активности")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Выход выполнен успешно"),
+            @ApiResponse(responseCode = "200", description = "Сессия обновлена"),
             @ApiResponse(responseCode = "404", description = "Сессия не найдена")
     })
-    public ResponseEntity<Void> logoutSession(
-            @Parameter(description = "Уникальный идентификатор сессии", required = true, example = "1")
+    public ResponseEntity<SessionResponse> updateLastActive(
+            @Parameter(description = "ID сессии", required = true, example = "1")
             @PathVariable Long id) {
-        sessionService.logoutSession(id);
-        return ResponseEntity.noContent().build();
+        Session session = sessionService.updateLastActive(id);
+        return ResponseEntity.ok(convertToResponse(session));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить сессию")
+    @Operation(summary = "Отозвать сессию")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Сессия успешно удалена"),
+            @ApiResponse(responseCode = "204", description = "Сессия отозвана"),
             @ApiResponse(responseCode = "404", description = "Сессия не найдена")
     })
-    public ResponseEntity<Void> deleteSession(
-            @Parameter(description = "Уникальный идентификатор сессии", required = true, example = "1")
+    public ResponseEntity<Void> revokeSession(
+            @Parameter(description = "ID сессии", required = true, example = "1")
             @PathVariable Long id) {
-        sessionService.deleteSession(id);
+        sessionService.revokeSession(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/user/{userId}/all")
+    @Operation(summary = "Отозвать все сессии пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Все сессии отозваны")
+    })
+    public ResponseEntity<Void> revokeAllUserSessions(
+            @Parameter(description = "ID пользователя", required = true, example = "1")
+            @PathVariable Long userId) {
+        sessionService.revokeAllUserSessions(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    private SessionResponse convertToResponse(Session session) {
+        SessionResponse response = new SessionResponse();
+        response.setId(session.getId());
+        response.setDeviceName(session.getDeviceName());
+        response.setIpAddress(session.getIpAddress());
+        response.setUserAgent(session.getUserAgent());
+        response.setIsActive(session.getIsActive());
+        response.setCreatedAt(session.getCreatedAt());
+        response.setLastActiveAt(session.getLastActiveAt());
+        response.setExpiresAt(session.getExpiresAt());
+
+        if (session.getUser() != null) {
+            response.setUser(convertUserToDTO(session.getUser()));
+        }
+
+        return response;
+    }
+
+    private org.example.dto.User.UserDTO convertUserToDTO(org.example.entity.User user) {
+        org.example.dto.User.UserDTO dto = new org.example.dto.User.UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        return dto;
     }
 }

@@ -5,8 +5,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.enums.DeliveryStatus;
 import org.example.enums.MessageType;
+import org.example.enums.DeliveryStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,11 +31,11 @@ public class Message {
     @JsonIgnore
     private User sender;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 5000)
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20, columnDefinition = "varchar(20)")
     private MessageType messageType;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,14 +43,11 @@ public class Message {
     @JsonIgnore
     private Message replyTo;
 
-    @Column(nullable = false)
-    private Boolean isEdited = false;
-
-    @Column(nullable = false)
-    private Boolean isDeleted = false;
+    private Boolean isEdited;
+    private Boolean isDeleted;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(length = 20, columnDefinition = "varchar(20)")
     private DeliveryStatus deliveryStatus;
 
     private LocalDateTime createdAt;
@@ -63,8 +60,4 @@ public class Message {
     @JsonIgnore
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reaction> reactions;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MessageRead> reads;
 }

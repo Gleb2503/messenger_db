@@ -6,17 +6,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dto.User.CreateUserRequest;
+import org.example.dto.User.UpdateUserRequest;
 import org.example.dto.User.UserResponse;
-import org.example.entity.User;
-import org.example.enums.UserStatus;
 import org.example.service.UserService;
-import org.example.exeption.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -28,16 +25,12 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    @Operation(summary = "Получить всех пользователей")
+    @Operation(summary = "Получить последние 100 пользователей")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        List<UserResponse> response = users.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<UserResponse>> getLast100Users() {
+        List<UserResponse> response = userService.getLast100Users();
         return ResponseEntity.ok(response);
     }
 
@@ -48,111 +41,75 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
     public ResponseEntity<UserResponse> getUserById(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
+            @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable Long id) {
-        User user = userService.getUserById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-        return ResponseEntity.ok(convertToResponse(user));
+        UserResponse response = userService.getUserById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/username/{username}")
+    @Operation(summary = "Получить пользователя по имени")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
+    public ResponseEntity<UserResponse> getUserByUsername(
+            @Parameter(description = "Имя пользователя", required = true, example = "ivan_dev")
+            @PathVariable String username) {
+        UserResponse response = userService.getUserByUsername(username);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Поиск пользователей по имени")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
+    })
+    public ResponseEntity<List<UserResponse>> searchUsers(
+            @Parameter(description = "Часть имени", required = true, example = "ivan")
+            @RequestParam String username) {
+        List<UserResponse> response = userService.searchUsersByUsername(username);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    @Operation(summary = "Создать нового пользователя")
+    @Operation(summary = "Создать пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Пользователь успешно создан"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "201", description = "Пользователь создан"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
     })
     public ResponseEntity<UserResponse> createUser(
-            @Parameter(description = "Данные для создания пользователя", required = true)
+            @Parameter(description = "Данные пользователя", required = true)
             @RequestBody CreateUserRequest request) {
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(request.getPassword());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setDisplayName(request.getDisplayName());
-
-        if (request.getStatus() != null) {
-            user.setStatus(UserStatus.valueOf(request.getStatus()));
-        } else {
-            user.setStatus(UserStatus.offline);
-        }
-
-        User created = userService.createUser(user);
-        return ResponseEntity.status(201).body(convertToResponse(created));
+        UserResponse response = userService.createUser(request);
+        return ResponseEntity.status(201).body(response);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Обновить данные пользователя")
+    @Operation(summary = "Обновить пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Пользователь успешно обновлен"),
+            @ApiResponse(responseCode = "200", description = "Пользователь обновлён"),
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
     public ResponseEntity<UserResponse> updateUser(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
+            @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable Long id,
-            @Parameter(description = "Обновленные данные пользователя", required = true)
-            @RequestBody CreateUserRequest request) {
-        User existingUser = userService.getUserById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
-        existingUser.setUsername(request.getUsername());
-        existingUser.setEmail(request.getEmail());
-        existingUser.setDisplayName(request.getDisplayName());
-        existingUser.setPhoneNumber(request.getPhoneNumber());
-
-        if (request.getStatus() != null) {
-            existingUser.setStatus(UserStatus.valueOf(request.getStatus()));
-        }
-
-        User updated = userService.updateUser(id, existingUser);
-        return ResponseEntity.ok(convertToResponse(updated));
+            @Parameter(description = "Обновлённые данные", required = true)
+            @RequestBody UpdateUserRequest request) {
+        UserResponse response = userService.updateUser(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Пользователь успешно удален"),
+            @ApiResponse(responseCode = "204", description = "Пользователь удалён"),
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
     public ResponseEntity<Void> deleteUser(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
+            @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/{id}/status")
-    @Operation(summary = "Обновить статус пользователя")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Статус успешно обновлен"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
-            @ApiResponse(responseCode = "400", description = "Неверный статус")
-    })
-    public ResponseEntity<UserResponse> updateUserStatus(
-            @Parameter(description = "Уникальный идентификатор пользователя", required = true, example = "1")
-            @PathVariable Long id,
-            @Parameter(description = "Новый статус", required = true, example = "online")
-            @RequestParam String status) {
-        try {
-            UserStatus userStatus = UserStatus.valueOf(status);
-            User updated = userService.updateUserStatus(id, userStatus);
-            return ResponseEntity.ok(convertToResponse(updated));
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + status + ". Valid values: online, offline, away, busy");
-        }
-    }
-
-    private UserResponse convertToResponse(User user) {
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setEmail(user.getEmail());
-        response.setDisplayName(user.getDisplayName());
-        response.setAvatarUrl(user.getAvatarUrl());
-        response.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
-        response.setLastSeen(user.getLastSeen());
-        response.setCreatedAt(user.getCreatedAt());
-        return response;
     }
 }

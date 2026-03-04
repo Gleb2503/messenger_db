@@ -2,23 +2,18 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.dto.Message.MessageResponse;
 import org.example.entity.Message;
 import org.example.service.MessageService;
-import org.example.exeption.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -29,29 +24,45 @@ public class MessageController {
 
     private final MessageService messageService;
 
-    @GetMapping
-    @Operation(summary = "Получить все сообщения")
+    @GetMapping("/chat/{chatId}/recent")
+    @Operation(summary = "Получить последние сообщения чата")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Message.class),
-                            examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": 1,
-                        "chat": {"id": 1, "name": "Рабочий чат"},
-                        "sender": {"id": 1, "username": "ivan_dev"},
-                        "content": "Привет всем!",
-                        "messageType": "text",
-                        "deliveryStatus": "sent",
-                        "createdAt": "2026-02-27T17:30:00"
-                      }
-                    ]
-                    """))),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "200", description = "Список сообщений"),
+            @ApiResponse(responseCode = "404", description = "Чат не найден")
     })
-    public ResponseEntity<List<Message>> getAllMessages() {
-        return ResponseEntity.ok(messageService.getAllMessages());
+    public ResponseEntity<List<MessageResponse>> getRecentMessages(
+            @Parameter(description = "ID чата", required = true, example = "1")
+            @PathVariable Long chatId,
+
+            @Parameter(description = "Количество сообщений (макс. 500)", example = "500")
+            @RequestParam(defaultValue = "500") int limit) {
+
+        if (limit > 500) {
+            limit = 500;
+        }
+
+        List<Message> messages = messageService.getRecentMessagesByChatId(chatId, limit);
+
+        List<MessageResponse> response = messages.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/chats/last")
+    @Operation(summary = "Получить последнее сообщение для каждого чата")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список последних сообщений")
+    })
+    public ResponseEntity<List<MessageResponse>> getLastMessagesPerChat() {
+        List<Message> messages = messageService.getLastMessagesPerChat();
+
+        List<MessageResponse> response = messages.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -60,122 +71,114 @@ public class MessageController {
             @ApiResponse(responseCode = "200", description = "Сообщение найдено"),
             @ApiResponse(responseCode = "404", description = "Сообщение не найдено")
     })
-    public ResponseEntity<Message> getMessageById(
-            @Parameter(description = "Уникальный идентификатор сообщения", required = true, example = "1")
+    public ResponseEntity<MessageResponse> getMessageById(
+            @Parameter(description = "ID сообщения", required = true, example = "1")
             @PathVariable Long id) {
-        return messageService.getMessageById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + id));
+        Message message = messageService.getMessageById(id);
+        return ResponseEntity.ok(convertToResponse(message));
     }
 
     @GetMapping("/chat/{chatId}")
-    @Operation(summary = "Получить сообщения чата с пагинацией")
+    @Operation(summary = "Получить сообщения чата")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                    {
-                      "content": [
-                        {
-                          "id": 1,
-                          "sender": {"id": 1, "username": "ivan_dev"},
-                          "content": "Привет всем!",
-                          "messageType": "text",
-                          "createdAt": "2026-02-27T17:30:00"
-                        }
-                      ],
-                      "totalPages": 1,
-                      "totalElements": 1,
-                      "size": 20,
-                      "number": 0
-                    }
-                    """))),
-            @ApiResponse(responseCode = "404", description = "Чат не найден")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<Page<Message>> getMessagesByChatId(
-            @Parameter(description = "Уникальный идентификатор чата", required = true, example = "1")
-            @PathVariable Long chatId,
-            @Parameter(description = "Номер страницы", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Размер страницы", example = "20")
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(messageService.getMessagesByChatId(chatId, page, size));
+    public ResponseEntity<List<MessageResponse>> getMessagesByChat(
+            @Parameter(description = "ID чата", required = true, example = "1")
+            @PathVariable Long chatId) {
+        List<Message> messages = messageService.getMessagesByChatId(chatId);
+        List<MessageResponse> response = messages.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/sender/{senderId}")
     @Operation(summary = "Получить сообщения от пользователя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка"),
-            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
     })
-    public ResponseEntity<List<Message>> getMessagesBySenderId(
-            @Parameter(description = "Уникальный идентификатор отправителя", required = true, example = "1")
+    public ResponseEntity<List<MessageResponse>> getMessagesBySender(
+            @Parameter(description = "ID отправителя", required = true, example = "1")
             @PathVariable Long senderId) {
-        return ResponseEntity.ok(messageService.getMessagesBySenderId(senderId));
+        List<Message> messages = messageService.getMessagesBySenderId(senderId);
+        List<MessageResponse> response = messages.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    @Operation(summary = "Отправить новое сообщение")
+    @Operation(summary = "Отправить сообщение")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Сообщение успешно отправлено",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Message.class),
-                            examples = @ExampleObject(value = """
-                    {
-                      "id": 1,
-                      "chat": {"id": 1, "name": "Рабочий чат"},
-                      "sender": {"id": 1, "username": "ivan_dev"},
-                      "content": "Привет всем! Как дела?",
-                      "messageType": "text",
-                      "deliveryStatus": "sent",
-                      "createdAt": "2026-02-27T17:30:00"
-                    }
-                    """))),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
-            @ApiResponse(responseCode = "404", description = "Чат или пользователь не найден"),
-            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+            @ApiResponse(responseCode = "201", description = "Сообщение отправлено"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные")
     })
-    public ResponseEntity<Message> sendMessage(
-            @Parameter(description = "Данные для создания сообщения", required = true)
-            @RequestBody Message message) {
-        return ResponseEntity.ok(messageService.sendMessage(message));
+    public ResponseEntity<MessageResponse> sendMessage(
+            @Parameter(description = "Данные сообщения", required = true)
+            @RequestBody org.example.dto.Message.CreateMessageRequest request) {
+        Message message = messageService.sendMessage(request.toEntity());
+        return ResponseEntity.status(201).body(convertToResponse(message));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Редактировать сообщение")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Сообщение успешно обновлено",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                    {
-                      "id": 1,
-                      "content": "Привет всем! Как дела? 👋",
-                      "isEdited": true,
-                      "updatedAt": "2026-02-27T17:35:00"
-                    }
-                    """))),
-            @ApiResponse(responseCode = "404", description = "Сообщение не найдено"),
-            @ApiResponse(responseCode = "403", description = "Нет прав на редактирование")
+            @ApiResponse(responseCode = "200", description = "Сообщение обновлено"),
+            @ApiResponse(responseCode = "404", description = "Сообщение не найдено")
     })
-    public ResponseEntity<Message> editMessage(
-            @Parameter(description = "Уникальный идентификатор сообщения", required = true, example = "1")
+    public ResponseEntity<MessageResponse> updateMessage(
+            @Parameter(description = "ID сообщения", required = true, example = "1")
             @PathVariable Long id,
-            @Parameter(description = "Обновленные данные сообщения", required = true)
-            @RequestBody Message message) {
-        return ResponseEntity.ok(messageService.editMessage(id, message.getContent()));
+            @Parameter(description = "Обновлённые данные", required = true)
+            @RequestBody org.example.dto.Message.CreateMessageRequest request) {
+        Message message = messageService.updateMessage(id, request.toEntity());
+        return ResponseEntity.ok(convertToResponse(message));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить сообщение")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Сообщение успешно удалено"),
-            @ApiResponse(responseCode = "404", description = "Сообщение не найдено"),
-            @ApiResponse(responseCode = "403", description = "Нет прав на удаление")
+            @ApiResponse(responseCode = "204", description = "Сообщение удалено"),
+            @ApiResponse(responseCode = "404", description = "Сообщение не найдено")
     })
-    public ResponseEntity<Message> deleteMessage(
-            @Parameter(description = "Уникальный идентификатор сообщения", required = true, example = "1")
+    public ResponseEntity<Void> deleteMessage(
+            @Parameter(description = "ID сообщения", required = true, example = "1")
             @PathVariable Long id) {
-        return ResponseEntity.ok(messageService.deleteMessage(id));
+        messageService.deleteMessage(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private MessageResponse convertToResponse(Message message) {
+        MessageResponse response = new MessageResponse();
+        response.setId(message.getId());
+        response.setContent(message.getContent());
+        response.setMessageType(message.getMessageType());
+        response.setIsEdited(message.getIsEdited());
+        response.setIsDeleted(message.getIsDeleted());
+        response.setDeliveryStatus(message.getDeliveryStatus());
+        response.setCreatedAt(message.getCreatedAt());
+        response.setUpdatedAt(message.getUpdatedAt());
+
+        if (message.getChat() != null) {
+            response.setChat(new org.example.dto.Chat.ChatDTO(
+                    message.getChat().getId(),
+                    message.getChat().getName()
+            ));
+        }
+
+        if (message.getSender() != null) {
+            response.setSender(convertUserToDTO(message.getSender()));
+        }
+
+        return response;
+    }
+
+    private org.example.dto.User.UserDTO convertUserToDTO(org.example.entity.User user) {
+        org.example.dto.User.UserDTO dto = new org.example.dto.User.UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        return dto;
     }
 }

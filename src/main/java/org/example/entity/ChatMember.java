@@ -30,18 +30,16 @@ public class ChatMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20, columnDefinition = "varchar(20)")
     private MemberRole role;
 
-    @Column(nullable = false)
-    private Boolean isActive = true;
-
+    private Boolean isActive;
     private LocalDateTime joinedAt;
     private LocalDateTime leftAt;
 
     @Column(nullable = false)
-    private Boolean isMuted = false;
+    private Boolean isMuted;
 
     @Column(nullable = false)
-    private Boolean isPinned = false;
+    private Boolean isPinned;
 }

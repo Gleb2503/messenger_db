@@ -23,10 +23,10 @@ public class Attachment {
     @JsonIgnore
     private Message message;
 
-    @Column(nullable = false, length = 500)
+    @Column(length = 500)
     private String fileUrl;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 200)
     private String fileName;
 
     private Long fileSize;

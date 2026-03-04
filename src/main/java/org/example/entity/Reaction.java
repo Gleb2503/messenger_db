@@ -28,7 +28,7 @@ public class Reaction {
     @JsonIgnore
     private User user;
 
-    @Column(nullable = false, length = 10)
+    @Column(length = 10)
     private String emoji;
 
     private LocalDateTime createdAt;
