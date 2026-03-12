@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -78,7 +79,8 @@ public class NotificationController {
     })
     public ResponseEntity<NotificationResponse> createNotification(
             @Parameter(description = "Данные уведомления", required = true)
-            @RequestBody CreateNotificationRequest request) {
+            @Valid @RequestBody CreateNotificationRequest request) {  // ✅ ДОБАВЛЕНО @Valid!
+
         NotificationResponse response = notificationService.createNotification(request);
         return ResponseEntity.status(201).body(response);
     }

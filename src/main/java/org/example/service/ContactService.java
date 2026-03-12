@@ -24,14 +24,12 @@ public class ContactService {
     private final ContactRepository contactRepository;
     private final UserRepository userRepository;
 
-
     public List<ContactResponse> getLast100Contacts() {
         return contactRepository.findTop100ByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-
 
     public List<ContactResponse> getLast100ContactsByUser(Long userId) {
         return contactRepository.findTop100ByUserIdOrderByCreatedAtDesc(userId)

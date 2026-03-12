@@ -2,140 +2,127 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dto.Attachment.AttachmentResponse;
-import org.example.entity.Attachment;
+import org.example.dto.Attachment.CreateAttachmentRequest;
 import org.example.service.AttachmentService;
+import org.example.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/attachments")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Attachments", description = "Управление вложениями")
+@Slf4j
 public class AttachmentController {
 
     private final AttachmentService attachmentService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @GetMapping("/chat/{chatId}/recent")
-    @Operation(summary = "Получить последние вложения чата")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список вложений"),
-            @ApiResponse(responseCode = "404", description = "Чат не найден")
-    })
-    public ResponseEntity<List<AttachmentResponse>> getRecentAttachments(
-            @Parameter(description = "ID чата", required = true, example = "1")
-            @PathVariable Long chatId,
-
-            @Parameter(description = "Количество вложений (макс. 500)", example = "500")
-            @RequestParam(defaultValue = "500") int limit) {
-
-        if (limit > 500) {
-            limit = 500;
-        }
-
-        List<Attachment> attachments = attachmentService.getRecentAttachmentsByChatId(chatId, limit);
-
-        List<AttachmentResponse> response = attachments.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/chats/last")
-    @Operation(summary = "Получить последнее вложение для каждого чата")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список последних вложений")
-    })
-    public ResponseEntity<List<AttachmentResponse>> getLastAttachmentsPerChat() {
-        List<Attachment> attachments = attachmentService.getLastAttachmentsPerChat();
-
-        List<AttachmentResponse> response = attachments.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/message/{messageId}")
-    @Operation(summary = "Получить вложения сообщения")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
-    })
-    public ResponseEntity<List<AttachmentResponse>> getAttachmentsByMessage(
-            @Parameter(description = "ID сообщения", required = true, example = "1")
-            @PathVariable Long messageId) {
-        List<Attachment> attachments = attachmentService.getAttachmentsByMessageId(messageId);
-        List<AttachmentResponse> response = attachments.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(response);
+    @GetMapping
+    public ResponseEntity<List<AttachmentResponse>> getLast100Attachments() {
+        log.debug("Getting last 100 attachments");
+        return ResponseEntity.ok(attachmentService.getLast100Attachments());
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Получить вложение по ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Вложение найдено"),
-            @ApiResponse(responseCode = "404", description = "Вложение не найдено")
-    })
-    public ResponseEntity<AttachmentResponse> getAttachmentById(
-            @Parameter(description = "ID вложения", required = true, example = "1")
-            @PathVariable Long id) {
-        Attachment attachment = attachmentService.getAttachmentById(id);
-        return ResponseEntity.ok(convertToResponse(attachment));
+    public ResponseEntity<AttachmentResponse> getAttachmentById(@PathVariable Long id) {
+        log.debug("Getting attachment by id: {}", id);
+        return ResponseEntity.ok(attachmentService.getAttachmentById(id));
     }
 
-    @PostMapping
-    @Operation(summary = "Загрузить вложение")
+    @GetMapping("/message/{messageId}")
+    public ResponseEntity<List<AttachmentResponse>> getLast100AttachmentsByMessage(@PathVariable Long messageId) {
+        log.debug("Getting attachments for message: {}", messageId);
+        return ResponseEntity.ok(attachmentService.getLast100AttachmentsByMessage(messageId));
+    }
+
+    @GetMapping("/chat/{chatId}")
+    public ResponseEntity<List<AttachmentResponse>> getLast100AttachmentsByChat(@PathVariable Long chatId) {
+        log.debug("Getting attachments for chat: {}", chatId);
+        return ResponseEntity.ok(attachmentService.getLast100AttachmentsByChat(chatId));
+    }
+
+    @GetMapping("/recent-per-chat")
+    public ResponseEntity<List<AttachmentResponse>> getLastAttachmentsPerChat() {
+        log.debug("Getting last attachments per chat");
+        return ResponseEntity.ok(attachmentService.getLastAttachmentsPerChat());
+    }
+
+    @PostMapping(
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @Operation(summary = "Загрузить вложение в облако")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Вложение загружено"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные")
+            @ApiResponse(responseCode = "201", description = "Файл успешно загружен"),
+            @ApiResponse(responseCode = "400", description = "Некорректные данные"),
+            @ApiResponse(responseCode = "401", description = "Неавторизован"),
+            @ApiResponse(responseCode = "500", description = "Ошибка сервера")
     })
-    public ResponseEntity<AttachmentResponse> uploadAttachment(
+    public ResponseEntity<AttachmentResponse> createAttachment(
+
             @Parameter(description = "Данные вложения", required = true)
-            @RequestBody org.example.dto.Attachment.CreateAttachmentRequest request) {
-        Attachment attachment = attachmentService.uploadAttachment(request.toEntity());
-        return ResponseEntity.status(201).body(convertToResponse(attachment));
+            @ModelAttribute @Valid CreateAttachmentRequest request,
+
+            @Parameter(
+                    description = "Файл для загрузки",
+                    required = true,
+                    content = @Content(
+                            mediaType = "multipart/form-data",
+                            schema = @Schema(type = "string", format = "binary")
+                    )
+            )
+            @RequestParam("file") MultipartFile file,
+
+            HttpServletRequest httpRequest) {
+
+        log.debug("Received attachment upload request: fileName={}", request.getFileName());
+
+
+        String token = httpRequest.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            log.warn("Missing or invalid Authorization header");
+            return ResponseEntity.status(401).build();
+        }
+
+        Long userId;
+        try {
+            userId = jwtTokenProvider.getUserIdFromToken(token.substring(7));
+        } catch (Exception e) {
+            log.warn("Failed to extract userId from token", e);
+            return ResponseEntity.status(401).build();
+        }
+
+        if (userId == null) {
+            log.warn("userId is null after token parsing");
+            return ResponseEntity.status(401).build();
+        }
+
+        log.info("Uploading attachment for userId={}", userId);
+
+        AttachmentResponse response = attachmentService.createAttachment(request, file, userId);
+        return ResponseEntity.status(201).body(response);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить вложение")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Вложение удалено"),
-            @ApiResponse(responseCode = "404", description = "Вложение не найдено")
-    })
-    public ResponseEntity<Void> deleteAttachment(
-            @Parameter(description = "ID вложения", required = true, example = "1")
-            @PathVariable Long id) {
+    public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
+        log.debug("Deleting attachment: id={}", id);
         attachmentService.deleteAttachment(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private AttachmentResponse convertToResponse(Attachment attachment) {
-        AttachmentResponse response = new AttachmentResponse();
-        response.setId(attachment.getId());
-        response.setFileUrl(attachment.getFileUrl());
-        response.setFileName(attachment.getFileName());
-        response.setFileSize(attachment.getFileSize());
-        response.setFileType(attachment.getFileType());
-        response.setThumbnailUrl(attachment.getThumbnailUrl());
-        response.setCreatedAt(attachment.getCreatedAt());
-
-        if (attachment.getMessage() != null) {
-            response.setMessage(new org.example.dto.Message.MessageDTO(
-                    attachment.getMessage().getId(),
-                    attachment.getMessage().getContent()
-            ));
-        }
-
-        return response;
     }
 }

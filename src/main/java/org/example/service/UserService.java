@@ -1,6 +1,8 @@
 package org.example.service;
 
 import org.example.dto.User.UserResponse;
+import org.example.dto.User.CreateUserRequest;
+import org.example.dto.User.UpdateUserRequest;
 import org.example.entity.User;
 import org.example.exeption.ResourceNotFoundException;
 import org.example.repository.UserRepository;
@@ -9,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,7 +50,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse createUser(org.example.dto.User.CreateUserRequest request) {
+    public UserResponse createUser(CreateUserRequest request) {
         User user = request.toEntity();
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         User saved = userRepository.save(user);
@@ -55,7 +58,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(Long id, org.example.dto.User.UpdateUserRequest request) {
+    public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User existing = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
@@ -69,6 +72,7 @@ public class UserService {
             existing.setAvatarUrl(request.getAvatarUrl());
         }
 
+        existing.setUpdatedAt(LocalDateTime.now());
         User updated = userRepository.save(existing);
         return convertToResponse(updated);
     }

@@ -38,7 +38,6 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
-
     public List<NotificationResponse> getLast100UnreadByUser(Long userId) {
         return notificationRepository.findTop100ByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
                 .stream()

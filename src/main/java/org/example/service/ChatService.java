@@ -1,6 +1,8 @@
 package org.example.service;
 
 import org.example.dto.Chat.ChatResponse;
+import org.example.dto.Chat.CreateChatRequest;
+import org.example.dto.User.UserDTO;
 import org.example.entity.Chat;
 import org.example.entity.User;
 import org.example.exeption.ResourceNotFoundException;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +28,7 @@ public class ChatService {
         return chatRepository.findTop100ByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::convertToResponse)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     public ChatResponse getChatById(Long id) {
@@ -38,29 +41,32 @@ public class ChatService {
         return chatRepository.findTop100ByCreatedBy_IdOrderByCreatedAtDesc(createdById)
                 .stream()
                 .map(this::convertToResponse)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public ChatResponse createChat(org.example.dto.Chat.CreateChatRequest request) {
+    public ChatResponse createChat(CreateChatRequest request, Long currentUserId) {
         Chat chat = request.toEntity();
-        if (chat.getCreatedBy() != null && chat.getCreatedBy().getId() != null) {
-            User creator = userRepository.findById(chat.getCreatedBy().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Creator not found with id: " + chat.getCreatedBy().getId()));
-            chat.setCreatedBy(creator);
-        }
+
+        User creator = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Creator not found with id: " + currentUserId));
+        chat.setCreatedBy(creator);
+
         chat.setCreatedAt(LocalDateTime.now());
         chat.setUpdatedAt(LocalDateTime.now());
+
         Chat saved = chatRepository.save(chat);
         return convertToResponse(saved);
     }
 
     @Transactional
-    public ChatResponse updateChat(Long id, org.example.dto.Chat.CreateChatRequest request) {
+    public ChatResponse updateChat(Long id, CreateChatRequest request) {
         Chat existing = chatRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat not found with id: " + id));
         existing.setName(request.getName());
-        existing.setType(request.getType() != null ? org.example.enums.ChatType.valueOf(request.getType()) : existing.getType());
+        if (request.getType() != null) {
+            existing.setType(org.example.enums.ChatType.valueOf(request.getType()));
+        }
         existing.setAvatarUrl(request.getAvatarUrl());
         existing.setUpdatedAt(LocalDateTime.now());
         Chat updated = chatRepository.save(existing);
@@ -86,7 +92,7 @@ public class ChatService {
         response.setLastMessageTime(chat.getLastMessageTime());
 
         if (chat.getCreatedBy() != null) {
-            response.setCreatedBy(new org.example.dto.User.UserDTO(
+            response.setCreatedBy(new UserDTO(
                     chat.getCreatedBy().getId(),
                     chat.getCreatedBy().getUsername(),
                     chat.getCreatedBy().getEmail()

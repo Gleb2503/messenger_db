@@ -8,10 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dto.Chat.CreateChatRequest;
 import org.example.dto.Chat.ChatResponse;
 import org.example.service.ChatService;
+import org.example.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -22,38 +25,22 @@ import java.util.List;
 public class ChatController {
 
     private final ChatService chatService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping
-    @Operation(summary = "Получить последние 100 чатов")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
-    })
     public ResponseEntity<List<ChatResponse>> getLast100Chats() {
         List<ChatResponse> response = chatService.getLast100Chats();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Получить чат по ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Чат найден"),
-            @ApiResponse(responseCode = "404", description = "Чат не найден")
-    })
-    public ResponseEntity<ChatResponse> getChatById(
-            @Parameter(description = "ID чата", required = true, example = "1")
-            @PathVariable Long id) {
+    public ResponseEntity<ChatResponse> getChatById(@PathVariable Long id) {
         ChatResponse response = chatService.getChatById(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/created-by/{userId}")
-    @Operation(summary = "Получить последние 100 чатов созданных пользователем")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное получение списка")
-    })
-    public ResponseEntity<List<ChatResponse>> getLast100ChatsByCreator(
-            @Parameter(description = "ID пользователя", required = true, example = "1")
-            @PathVariable Long userId) {
+    public ResponseEntity<List<ChatResponse>> getLast100ChatsByCreator(@PathVariable Long userId) {
         List<ChatResponse> response = chatService.getLast100ChatsByCreator(userId);
         return ResponseEntity.ok(response);
     }
@@ -66,8 +53,20 @@ public class ChatController {
     })
     public ResponseEntity<ChatResponse> createChat(
             @Parameter(description = "Данные чата", required = true)
-            @RequestBody CreateChatRequest request) {
-        ChatResponse response = chatService.createChat(request);
+            @Valid @RequestBody CreateChatRequest request,
+            HttpServletRequest httpRequest) {
+
+        String token = httpRequest.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long currentUserId = jwtTokenProvider.getUserIdFromToken(token);
+        if (currentUserId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        ChatResponse response = chatService.createChat(request, currentUserId);
         return ResponseEntity.status(201).body(response);
     }
 
@@ -81,20 +80,13 @@ public class ChatController {
             @Parameter(description = "ID чата", required = true, example = "1")
             @PathVariable Long id,
             @Parameter(description = "Обновлённые данные", required = true)
-            @RequestBody CreateChatRequest request) {
+            @Valid @RequestBody CreateChatRequest request) {
         ChatResponse response = chatService.updateChat(id, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить чат")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Чат удалён"),
-            @ApiResponse(responseCode = "404", description = "Чат не найден")
-    })
-    public ResponseEntity<Void> deleteChat(
-            @Parameter(description = "ID чата", required = true, example = "1")
-            @PathVariable Long id) {
+    public ResponseEntity<Void> deleteChat(@PathVariable Long id) {
         chatService.deleteChat(id);
         return ResponseEntity.noContent().build();
     }

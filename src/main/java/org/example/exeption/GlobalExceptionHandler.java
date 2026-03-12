@@ -1,7 +1,9 @@
 package org.example.exeption;
 
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -10,25 +12,48 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
+    // ✅ Метод handleValidation должен быть здесь
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String field = ((FieldError) error).getField();
+            String message = error.getDefaultMessage();
+            errors.put(field, message);
+        });
+        log.warn("Validation failed: {}", errors);
+        return buildErrorResponse(400, "Validation failed", errors);
+    }
+
+
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Not Found");
-        body.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
+        log.error("Resource not found: {}", ex.getMessage());
+        return buildErrorResponse(404, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
+        log.error("Internal error: ", ex);
+        return buildErrorResponse(500, "Internal Server Error");
+    }
+
+
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(int status, String message) {
+        return buildErrorResponse(status, message, null);
+    }
+
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(int status, String message, Object details) {
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "Internal Server Error");
-        body.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        body.put("status", status);
+        body.put("error", message);
+        body.put("timestamp", LocalDateTime.now().toString());
+        if (details != null) {
+            body.put("details", details);
+        }
+        return ResponseEntity.status(status).body(body);
     }
 }

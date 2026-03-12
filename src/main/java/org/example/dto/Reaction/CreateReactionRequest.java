@@ -1,6 +1,9 @@
 package org.example.dto.Reaction;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;  // ✅ Импорт должен быть!
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.example.entity.Reaction;
 import org.example.entity.Message;
@@ -11,13 +14,17 @@ import java.time.LocalDateTime;
 @Schema(description = "Запрос на добавление реакции")
 public class CreateReactionRequest {
 
-    @Schema(description = "ID сообщения", example = "1")
+    @NotNull(message = "messageId не может быть null")
+    @Schema(description = "ID сообщения", example = "1", required = true)
     private Long messageId;
 
-    @Schema(description = "ID пользователя", example = "1")
+    @NotNull(message = "userId не может быть null")
+    @Schema(description = "ID пользователя", example = "1", required = true)
     private Long userId;
 
-    @Schema(description = "Эмодзи реакции", example = "👍")
+    @NotBlank(message = "emoji не может быть пустым")
+    @Size(max = 10, message = "emoji не может превышать 10 символов")
+    @Schema(description = "Эмодзи реакции", example = "👍", required = true)
     private String emoji;
 
     public Reaction toEntity() {
@@ -35,7 +42,7 @@ public class CreateReactionRequest {
             reaction.setUser(user);
         }
 
-        reaction.setEmoji(this.emoji != null ? this.emoji : "👍");
+        reaction.setEmoji(this.emoji);
         reaction.setCreatedAt(LocalDateTime.now());
 
         return reaction;

@@ -37,19 +37,13 @@ public class Chat {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_message_id")
-    @JsonIgnore
-    private Message lastMessage;
-
     private LocalDateTime lastMessageTime;
 
     @JsonIgnore
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatMember> members;
+    private List<Message> messages;
 
     @JsonIgnore
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Message> messages;
+    private List<ChatMember> chatMembers;
 }

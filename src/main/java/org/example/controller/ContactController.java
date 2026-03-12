@@ -5,13 +5,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.dto.Contact.CreateContactRequest;
 import org.example.dto.Contact.ContactResponse;
+import org.example.dto.Contact.CreateContactRequest;
 import org.example.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -66,7 +67,7 @@ public class ContactController {
     })
     public ResponseEntity<ContactResponse> addContact(
             @Parameter(description = "Данные контакта", required = true)
-            @RequestBody CreateContactRequest request) {
+            @Valid @RequestBody CreateContactRequest request) {
         ContactResponse response = contactService.addContact(request);
         return ResponseEntity.status(201).body(response);
     }

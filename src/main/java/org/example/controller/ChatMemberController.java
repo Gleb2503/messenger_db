@@ -7,15 +7,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dto.ChatMember.CreateChatMemberRequest;
 import org.example.dto.ChatMember.ChatMemberResponse;
-import org.example.entity.ChatMember;
 import org.example.service.ChatMemberService;
-import org.example.exeption.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chat-members")
@@ -34,10 +33,7 @@ public class ChatMemberController {
     public ResponseEntity<List<ChatMemberResponse>> getLast100ChatsByUser(
             @Parameter(description = "ID пользователя", required = true, example = "1")
             @PathVariable Long userId) {
-        List<ChatMember> members = chatMemberService.getLast100MembersByUser(userId);
-        List<ChatMemberResponse> response = members.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        List<ChatMemberResponse> response = chatMemberService.getLast100MembersByUser(userId);
         return ResponseEntity.ok(response);
     }
 
@@ -49,10 +45,7 @@ public class ChatMemberController {
     public ResponseEntity<List<ChatMemberResponse>> getLast100MembersByChat(
             @Parameter(description = "ID чата", required = true, example = "1")
             @PathVariable Long chatId) {
-        List<ChatMember> members = chatMemberService.getLast100MembersByChat(chatId);
-        List<ChatMemberResponse> response = members.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        List<ChatMemberResponse> response = chatMemberService.getLast100MembersByChat(chatId);
         return ResponseEntity.ok(response);
     }
 
@@ -64,9 +57,10 @@ public class ChatMemberController {
     })
     public ResponseEntity<ChatMemberResponse> addMember(
             @Parameter(description = "Данные участника", required = true)
-            @RequestBody CreateChatMemberRequest request) {
-        ChatMember member = chatMemberService.addMember(request.toEntity());
-        return ResponseEntity.status(201).body(convertToResponse(member));
+            @Valid @RequestBody CreateChatMemberRequest request) {
+
+        ChatMemberResponse response = chatMemberService.addMember(request);
+        return ResponseEntity.status(201).body(response);
     }
 
     @DeleteMapping("/{id}")
@@ -93,39 +87,7 @@ public class ChatMemberController {
             @PathVariable Long id,
             @Parameter(description = "Новая роль", required = true, example = "admin")
             @RequestParam String role) {
-        ChatMember member = chatMemberService.updateRole(id, role);
-        return ResponseEntity.ok(convertToResponse(member));
-    }
-
-    private ChatMemberResponse convertToResponse(ChatMember member) {
-        ChatMemberResponse response = new ChatMemberResponse();
-        response.setId(member.getId());
-        response.setRole(member.getRole());
-        response.setIsActive(member.getIsActive());
-        response.setJoinedAt(member.getJoinedAt());
-        response.setLeftAt(member.getLeftAt());
-        response.setIsMuted(member.getIsMuted());
-        response.setIsPinned(member.getIsPinned());
-
-        if (member.getChat() != null) {
-            response.setChat(new org.example.dto.Chat.ChatDTO(
-                    member.getChat().getId(),
-                    member.getChat().getName()
-            ));
-        }
-
-        if (member.getUser() != null) {
-            response.setUser(convertUserToDTO(member.getUser()));
-        }
-
-        return response;
-    }
-
-    private org.example.dto.User.UserDTO convertUserToDTO(org.example.entity.User user) {
-        org.example.dto.User.UserDTO dto = new org.example.dto.User.UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        return dto;
+        ChatMemberResponse response = chatMemberService.updateRole(id, role);
+        return ResponseEntity.ok(response);
     }
 }

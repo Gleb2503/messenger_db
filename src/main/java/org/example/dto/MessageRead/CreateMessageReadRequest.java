@@ -1,6 +1,7 @@
 package org.example.dto.MessageRead;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.example.entity.MessageRead;
 import org.example.entity.Message;
@@ -11,10 +12,12 @@ import java.time.LocalDateTime;
 @Schema(description = "Запрос на отметку прочтения")
 public class CreateMessageReadRequest {
 
-    @Schema(description = "ID сообщения", example = "1")
+    @NotNull(message = "messageId не может быть null")
+    @Schema(description = "ID сообщения", example = "1", required = true)
     private Long messageId;
 
-    @Schema(description = "ID пользователя", example = "1")
+    @NotNull(message = "userId не может быть null")
+    @Schema(description = "ID пользователя", example = "1", required = true)
     private Long userId;
 
     public MessageRead toEntity() {
@@ -33,6 +36,7 @@ public class CreateMessageReadRequest {
         }
 
         messageRead.setReadAt(LocalDateTime.now());
+
         return messageRead;
     }
 }

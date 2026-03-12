@@ -40,10 +40,11 @@ public class User {
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(length = 20, columnDefinition = "varchar(20)")
     private UserStatus status;
 
-    @Column(length = 64)
+
+    @Column(length = 64, unique = true)
     private String apiKey;
 
     private LocalDateTime apiKeyExpiresAt;
@@ -51,6 +52,12 @@ public class User {
     private LocalDateTime lastSeen;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+
+    public void generateApiKey() {
+        this.apiKey = UUID.randomUUID().toString().replace("-", "");
+        this.apiKeyExpiresAt = LocalDateTime.now().plusDays(30);
+    }
 
     @JsonIgnore
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -75,9 +82,4 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Session> sessions;
-
-    public void generateApiKey() {
-        this.apiKey = UUID.randomUUID().toString().replace("-", "");
-        this.apiKeyExpiresAt = LocalDateTime.now().plusDays(30);
-    }
 }

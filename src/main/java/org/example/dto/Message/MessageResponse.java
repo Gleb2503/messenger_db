@@ -27,6 +27,9 @@ public class MessageResponse {
     @Schema(description = "Тип сообщения", example = "text")
     private MessageType messageType;
 
+    @Schema(description = "Сообщение, на которое отвечаем")
+    private ReplyToDTO replyTo;
+
     @Schema(description = "Отредактировано ли", example = "false")
     private Boolean isEdited;
 
@@ -36,7 +39,7 @@ public class MessageResponse {
     @Schema(description = "Статус доставки", example = "sent")
     private DeliveryStatus deliveryStatus;
 
-    @Schema(description = "Дата создания", example = "2026-03-03T14:00:00")
+    @Schema(description = "Дата создания", example = "2026-03-08T10:00:00")
     private LocalDateTime createdAt;
 
     @Schema(description = "Дата обновления")

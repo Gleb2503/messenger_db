@@ -5,12 +5,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.dto.MessageRead.MessageReadResponse;
 import org.example.dto.MessageRead.CreateMessageReadRequest;
+import org.example.dto.MessageRead.MessageReadResponse;
 import org.example.service.MessageReadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -55,7 +57,8 @@ public class MessageReadController {
     })
     public ResponseEntity<MessageReadResponse> markAsRead(
             @Parameter(description = "Данные прочтения", required = true)
-            @RequestBody CreateMessageReadRequest request) {
+            @Valid @RequestBody CreateMessageReadRequest request) {
+
         MessageReadResponse response = messageReadService.markAsRead(request);
         return ResponseEntity.status(201).body(response);
     }

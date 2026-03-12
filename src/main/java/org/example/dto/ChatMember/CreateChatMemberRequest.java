@@ -1,6 +1,8 @@
 package org.example.dto.ChatMember;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.example.entity.ChatMember;
 import org.example.entity.Chat;
@@ -12,12 +14,15 @@ import java.time.LocalDateTime;
 @Schema(description = "Запрос на добавление участника в чат")
 public class CreateChatMemberRequest {
 
-    @Schema(description = "ID чата", example = "1")
+    @NotNull(message = "chatId не может быть null")
+    @Schema(description = "ID чата", example = "1", required = true)
     private Long chatId;
 
-    @Schema(description = "ID пользователя", example = "2")
+    @NotNull(message = "userId не может быть null")
+    @Schema(description = "ID пользователя", example = "2", required = true)
     private Long userId;
 
+    @Pattern(regexp = "^(admin|moderator|member)$", message = "Некорректная роль")
     @Schema(description = "Роль участника", example = "member")
     private String role;
 

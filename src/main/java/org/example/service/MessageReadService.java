@@ -1,8 +1,8 @@
 package org.example.service;
 
-import org.example.dto.Message.MessageDTO;
 import org.example.dto.MessageRead.MessageReadResponse;
 import org.example.dto.MessageRead.CreateMessageReadRequest;
+import org.example.dto.Message.MessageDTO;
 import org.example.dto.User.UserDTO;
 import org.example.entity.MessageRead;
 import org.example.entity.Message;

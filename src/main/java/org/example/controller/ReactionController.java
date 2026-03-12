@@ -5,13 +5,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.dto.Reaction.ReactionResponse;
 import org.example.dto.Reaction.CreateReactionRequest;
+import org.example.dto.Reaction.ReactionResponse;
 import org.example.service.ReactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -55,7 +56,8 @@ public class ReactionController {
     })
     public ResponseEntity<ReactionResponse> addReaction(
             @Parameter(description = "Данные реакции", required = true)
-            @RequestBody CreateReactionRequest request) {
+            @Valid @RequestBody CreateReactionRequest request) {
+
         ReactionResponse response = reactionService.addReaction(request);
         return ResponseEntity.status(201).body(response);
     }
