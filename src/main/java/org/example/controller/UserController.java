@@ -11,6 +11,8 @@ import org.example.dto.User.UserResponse;
 import org.example.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -28,6 +30,19 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> getLast100Users() {
         List<UserResponse> response = userService.getLast100Users();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Получить текущего пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Данные пользователя"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован")
+    })
+    public ResponseEntity<UserResponse> getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        UserResponse response = userService.getUserByUsername(username);
         return ResponseEntity.ok(response);
     }
 

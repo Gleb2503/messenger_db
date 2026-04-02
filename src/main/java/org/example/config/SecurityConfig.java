@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
@@ -99,10 +100,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        configuration.setAllowedOriginPatterns(List.of(
+                "https://*.messenger-api.ru",
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "null"
+        ));
 
         configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
         ));
 
         configuration.setAllowedHeaders(Arrays.asList(
@@ -116,12 +123,11 @@ public class SecurityConfig {
         ));
 
         configuration.setAllowCredentials(true);
-
         configuration.setMaxAge(3600L);
+
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 }

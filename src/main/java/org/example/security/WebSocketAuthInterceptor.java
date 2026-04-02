@@ -1,6 +1,7 @@
 package org.example.security;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -22,24 +24,36 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authorization = accessor.getFirstNativeHeader("Authorization");
 
-            if (authorization != null && authorization.startsWith("Bearer ")) {
-                String token = authorization.substring(7);
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                log.warn("WebSocket CONNECT without Authorization header");
+                return null;
+            }
 
-                try {
-                    if (jwtTokenProvider.validateToken(token)) {
-                        Long userId = jwtTokenProvider.getUserIdFromToken(token);
-                        String username = jwtTokenProvider.getUsernameFromToken(token);
+            String token = authorization.substring(7);
 
-                        UsernamePasswordAuthenticationToken auth =
-                                new UsernamePasswordAuthenticationToken(userId, null, null);
-                        accessor.setUser(auth);
-
-                        accessor.getSessionAttributes().put("userId", userId);
-                        accessor.getSessionAttributes().put("username", username);
-                    }
-                } catch (Exception e) {
+            try {
+                if (!jwtTokenProvider.validateToken(token)) {
+                    log.warn("WebSocket CONNECT with invalid token");
                     return null;
                 }
+
+                Long userId = jwtTokenProvider.getUserIdFromToken(token);
+                String username = jwtTokenProvider.getUsernameFromToken(token);
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(userId, null, null);
+                accessor.setUser(auth);
+
+                if (accessor.getSessionAttributes() != null) {
+                    accessor.getSessionAttributes().put("userId", userId);
+                    accessor.getSessionAttributes().put("username", username);
+                }
+
+                log.debug("WebSocket authenticated: userId={}, username={}", userId, username);
+
+            } catch (Exception e) {
+                log.error("WebSocket authentication error: {}", e.getMessage(), e);
+                return null;
             }
         }
 

@@ -6,13 +6,19 @@ import org.example.entity.Attachment;
 import org.example.entity.Message;
 import org.example.exeption.ResourceNotFoundException;
 import org.example.repository.AttachmentRepository;
+import org.example.repository.ChatMemberRepository;
 import org.example.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +31,7 @@ public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final MessageRepository messageRepository;
+    private final ChatMemberRepository chatMemberRepository;
     private final FileStorageService fileStorageService;
 
     public List<AttachmentResponse> getLast100Attachments() {
@@ -61,11 +68,47 @@ public class AttachmentService {
                 .collect(Collectors.toList());
     }
 
+    public Attachment getAttachmentEntityById(Long id) {
+        return attachmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found: " + id));
+    }
+
+    public boolean canUserDownload(String username, Long attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found: " + attachmentId));
+        return canUserDownload(username, attachment);
+    }
+
+    public boolean canUserDownload(String username, Attachment attachment) {
+        if (attachment == null || attachment.getMessage() == null) {
+            return false;
+        }
+
+        Message message = attachment.getMessage();
+
+        if (message.getSender() != null &&
+                message.getSender().getUsername() != null &&
+                message.getSender().getUsername().equals(username)) {
+            return true;
+        }
+
+        if (message.getChat() != null && message.getChat().getId() != null) {
+            boolean isMember = chatMemberRepository.existsByChatIdAndUserUsername(
+                    message.getChat().getId(),
+                    username
+            );
+            if (isMember) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Transactional
     public AttachmentResponse createAttachment(CreateAttachmentRequest request, MultipartFile file, Long userId) {
         log.info("Creating attachment: fileName={}, fileSize={}", request.getFileName(), request.getFileSize());
 
-        // 1. Загружаем файл в облако
         String fileUrl;
         try {
             fileUrl = fileStorageService.uploadFile(file, userId.toString());
@@ -73,7 +116,6 @@ public class AttachmentService {
             log.error("Failed to upload file to storage", e);
             throw new RuntimeException("Failed to upload file to cloud storage", e);
         }
-
 
         Attachment attachment = request.toEntity();
         attachment.setFileUrl(fileUrl.trim());
@@ -92,14 +134,30 @@ public class AttachmentService {
         return convertToResponse(saved);
     }
 
+
+    public Resource downloadAttachmentWithAccessCheck(Long attachmentId, String username) {
+        if (!canUserDownload(username, attachmentId)) {
+            throw new AccessDeniedException("Access denied to attachment: " + attachmentId);
+        }
+
+        Attachment attachment = getAttachmentEntityById(attachmentId);
+
+        InputStream inputStream = fileStorageService.getFileStream(attachment.getFileUrl());
+        String contentType = attachment.getFileType();
+        if (contentType == null || contentType.isEmpty()) {
+            contentType = fileStorageService.getFileContentType(attachment.getFileUrl());
+        }
+
+
+        return new ContentTypeInputStreamResource(inputStream, contentType);
+    }
+
     @Transactional
     public void deleteAttachment(Long id) {
         Attachment attachment = attachmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attachment not found with id: " + id));
 
-
         fileStorageService.deleteFile(attachment.getFileUrl());
-
 
         attachmentRepository.deleteById(id);
         log.info("Attachment deleted: id={}", id);
@@ -108,7 +166,7 @@ public class AttachmentService {
     private AttachmentResponse convertToResponse(Attachment attachment) {
         AttachmentResponse response = new AttachmentResponse();
         response.setId(attachment.getId());
-        response.setFileUrl(attachment.getFileUrl().trim()); // ✅ Убираем пробелы!
+        response.setFileUrl(attachment.getFileUrl().trim());
         response.setFileName(attachment.getFileName());
         response.setFileSize(attachment.getFileSize());
         response.setFileType(attachment.getFileType());
@@ -151,5 +209,24 @@ public class AttachmentService {
         }
 
         return response;
+    }
+
+
+    private static class ContentTypeInputStreamResource extends InputStreamResource {
+        private final String contentType;
+
+        public ContentTypeInputStreamResource(InputStream inputStream, String contentType) {
+            super(inputStream);
+            this.contentType = contentType != null ? contentType : "application/octet-stream";
+        }
+
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Attachment file";
+        }
     }
 }

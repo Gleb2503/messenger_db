@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
@@ -25,39 +26,27 @@ public class FileStorageService {
     @Value("${cloud.storage.endpoint}")
     private String endpoint;
 
-    /**
-     * Загружает файл в Yandex Cloud Object Storage
-     * @param file Файл для загрузки
-     * @param userId ID пользователя (для организации папок)
-     * @return Публичный URL файла
-     */
     public String uploadFile(MultipartFile file, String userId) throws IOException {
         String originalFilename = file.getOriginalFilename();
         String extension = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf("."))
                 : "";
 
-
         String key = "users/" + userId + "/" + UUID.randomUUID() + extension;
-
 
         s3Client.putObject(PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
                 .contentType(file.getContentType())
+                .contentLength(file.getSize())
                 .build(), RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-
 
         String url = endpoint + "/" + bucket + "/" + key;
 
-        log.info(" File uploaded to Yandex Cloud: {}", url);
+        log.info("File uploaded to Yandex Cloud: {}", url);
         return url;
     }
 
-    /**
-     * Удаляет файл из облака
-     * @param fileUrl URL файла для удаления
-     */
     public void deleteFile(String fileUrl) {
         try {
             String key = extractKeyFromUrl(fileUrl);
@@ -65,20 +54,71 @@ public class FileStorageService {
                     .bucket(bucket)
                     .key(key)
                     .build());
-            log.info(" File deleted from Yandex Cloud: {}", fileUrl);
+            log.info("File deleted from Yandex Cloud: {}", fileUrl);
         } catch (Exception e) {
-            log.error(" Failed to delete file: {}", fileUrl, e);
+            log.error("Failed to delete file: {}", fileUrl, e);
         }
     }
 
 
-    private String extractKeyFromUrl(String url) {
+    public InputStream getFileStream(String fileUrl) {
+        String key = extractKeyFromUrl(fileUrl);
+        log.debug("Getting file stream: bucket={}, key={}", bucket, key);
 
-        String bucketPath = "/" + bucket + "/";
-        int startIndex = url.indexOf(bucketPath);
-        if (startIndex == -1) {
-            return url.substring(url.lastIndexOf("/") + 1);
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+
+        return s3Client.getObject(getObjectRequest);
+    }
+
+
+    public String getFileContentType(String fileUrl) {
+        try {
+            String key = extractKeyFromUrl(fileUrl);
+
+            HeadObjectRequest headRequest = HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            String contentType = s3Client.headObject(headRequest).contentType();
+            return contentType != null ? contentType : "application/octet-stream";
+
+        } catch (Exception e) {
+            log.warn("Failed to get content type for: {}", fileUrl);
+            return "application/octet-stream";
         }
-        return url.substring(startIndex + bucketPath.length());
+    }
+
+    public String extractKeyFromUrl(String url) {
+        try {
+            String bucketPath = "/" + bucket + "/";
+            int startIndex = url.indexOf(bucketPath);
+            if (startIndex == -1) {
+                return url.substring(url.lastIndexOf("/") + 1);
+            }
+            return url.substring(startIndex + bucketPath.length());
+        } catch (Exception e) {
+            log.warn("Failed to parse file URL: {}", url);
+            return url.replaceAll("^https://[^/]+/[^/]+/", "");
+        }
+    }
+
+    public boolean fileExists(String fileUrl) {
+        try {
+            String key = extractKeyFromUrl(fileUrl);
+            s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build());
+            return true;
+        } catch (NoSuchKeyException e) {
+            return false;
+        } catch (Exception e) {
+            log.warn("Error checking file existence: {}", e.getMessage());
+            return false;
+        }
     }
 }
