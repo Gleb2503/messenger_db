@@ -109,7 +109,7 @@
 | Интерфейс                 | URL |
 |---------------------------|-----|
 | **Swagger UI(локально)**  | http://localhost:8080/swagger-ui.html |
-| **Swagger UI(глобально)** | http://localhost:8080/swagger-ui.html |
+| **Swagger UI(глобально)** | https://messenger-api.ru/swagger-ui/index.html |
 ### Основные модули API
 
 | Модуль | Методы | Endpoint | Описание                          |
