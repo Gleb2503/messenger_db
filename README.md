@@ -106,10 +106,10 @@
 
 Полная интерактивная документация доступна через **Swagger UI**:
 
-| Интерфейс | URL |
-|-----------|-----|
-|  **Swagger UI** | http://localhost:8080/swagger-ui.html |
-
+| Интерфейс                 | URL |
+|---------------------------|-----|
+| **Swagger UI(локально)**  | http://localhost:8080/swagger-ui.html |
+| **Swagger UI(глобально)** | http://localhost:8080/swagger-ui.html |
 ### Основные модули API
 
 | Модуль | Методы | Endpoint | Описание                          |
