@@ -10,7 +10,7 @@ import org.example.repository.ChatMemberRepository;
 import org.example.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -134,7 +134,6 @@ public class AttachmentService {
         return convertToResponse(saved);
     }
 
-
     public Resource downloadAttachmentWithAccessCheck(Long attachmentId, String username) {
         if (!canUserDownload(username, attachmentId)) {
             throw new AccessDeniedException("Access denied to attachment: " + attachmentId);
@@ -142,14 +141,20 @@ public class AttachmentService {
 
         Attachment attachment = getAttachmentEntityById(attachmentId);
 
-        InputStream inputStream = fileStorageService.getFileStream(attachment.getFileUrl());
+        byte[] fileBytes;
+        try (InputStream inputStream = fileStorageService.getFileStream(attachment.getFileUrl())) {
+            fileBytes = inputStream.readAllBytes();
+        } catch (IOException e) {
+            log.error("Failed to read file from storage: {}", attachment.getFileUrl(), e);
+            throw new RuntimeException("Failed to read file", e);
+        }
+
         String contentType = attachment.getFileType();
         if (contentType == null || contentType.isEmpty()) {
             contentType = fileStorageService.getFileContentType(attachment.getFileUrl());
         }
 
-
-        return new ContentTypeInputStreamResource(inputStream, contentType);
+        return new ByteArrayFileResource(fileBytes, contentType, attachment.getFileName());
     }
 
     @Transactional
@@ -211,13 +216,14 @@ public class AttachmentService {
         return response;
     }
 
-
-    private static class ContentTypeInputStreamResource extends InputStreamResource {
+    private static class ByteArrayFileResource extends ByteArrayResource {
         private final String contentType;
+        private final String filename;
 
-        public ContentTypeInputStreamResource(InputStream inputStream, String contentType) {
-            super(inputStream);
+        public ByteArrayFileResource(byte[] byteArray, String contentType, String filename) {
+            super(byteArray);
             this.contentType = contentType != null ? contentType : "application/octet-stream";
+            this.filename = filename;
         }
 
         public String getContentType() {
@@ -225,8 +231,13 @@ public class AttachmentService {
         }
 
         @Override
+        public String getFilename() {
+            return filename;
+        }
+
+        @Override
         public String getDescription() {
-            return "Attachment file";
+            return "Attachment: " + filename;
         }
     }
 }

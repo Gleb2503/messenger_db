@@ -60,7 +60,6 @@ public class FileStorageService {
         }
     }
 
-
     public InputStream getFileStream(String fileUrl) {
         String key = extractKeyFromUrl(fileUrl);
         log.debug("Getting file stream: bucket={}, key={}", bucket, key);
@@ -72,7 +71,6 @@ public class FileStorageService {
 
         return s3Client.getObject(getObjectRequest);
     }
-
 
     public String getFileContentType(String fileUrl) {
         try {

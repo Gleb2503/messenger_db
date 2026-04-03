@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.Attachment.AttachmentResponse;
 import org.example.dto.Attachment.CreateAttachmentRequest;
-import org.example.exeption.ResourceNotFoundException;  // ← Проверьте пакет!
+import org.example.exeption.ResourceNotFoundException;
 import org.example.security.JwtTokenProvider;
 import org.example.service.AttachmentService;
 import org.springframework.core.io.Resource;
@@ -164,7 +164,6 @@ public class AttachmentController {
         log.debug("Download request authenticated: username={}, attachmentId={}", username, id);
 
         try {
-            // ✅ Теперь этот метод существует в сервисе!
             Resource resource = attachmentService.downloadAttachmentWithAccessCheck(id, username);
 
             org.example.entity.Attachment attachment = attachmentService.getAttachmentEntityById(id);
