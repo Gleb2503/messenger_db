@@ -18,7 +18,7 @@ public class CreateChatRequest {
     @Schema(description = "Название чата", example = "Рабочий чат", required = true)
     private String name;
 
-    @Pattern(regexp = "^(private|group|channel)$", message = "Некорректный тип чата")
+    @Pattern(regexp = "^(private_chat|group|channel)$", message = "Некорректный тип чата")
     @Schema(description = "Тип чата", example = "group")
     private String type;
 

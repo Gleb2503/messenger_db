@@ -39,6 +39,9 @@ public class Chat {
     private LocalDateTime updatedAt;
     private LocalDateTime lastMessageTime;
 
+    @Column(name = "is_pinned")
+    private boolean isPinned = false;
+
     @JsonIgnore
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Message> messages;

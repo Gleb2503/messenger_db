@@ -24,6 +24,13 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
 
+    public List<ChatResponse> getUserChats(Long userId) {
+        return chatRepository.findTop100ByCreatedBy_IdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<ChatResponse> getLast100Chats() {
         return chatRepository.findTop100ByOrderByCreatedAtDesc()
                 .stream()
@@ -74,6 +81,16 @@ public class ChatService {
     }
 
     @Transactional
+    public ChatResponse togglePin(Long id, Boolean pinned) {
+        Chat chat = chatRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Chat not found with id: " + id));
+        chat.setPinned(pinned);
+        chat.setUpdatedAt(LocalDateTime.now());
+        Chat updated = chatRepository.save(chat);
+        return convertToResponse(updated);
+    }
+
+    @Transactional
     public void deleteChat(Long id) {
         if (!chatRepository.existsById(id)) {
             throw new ResourceNotFoundException("Chat not found with id: " + id);
@@ -90,6 +107,7 @@ public class ChatService {
         response.setCreatedAt(chat.getCreatedAt());
         response.setUpdatedAt(chat.getUpdatedAt());
         response.setLastMessageTime(chat.getLastMessageTime());
+        response.setPinned(chat.isPinned());
 
         if (chat.getCreatedBy() != null) {
             response.setCreatedBy(new UserDTO(

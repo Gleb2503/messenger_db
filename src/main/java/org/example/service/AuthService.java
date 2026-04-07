@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -25,17 +24,26 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        String normalizedPhone = normalizePhone(request.getPhone());
+
+        if (normalizedPhone == null || normalizedPhone.isEmpty()) {
+            throw new IllegalArgumentException("Некорректный формат номера телефона");
+        }
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
-
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
+        }
+        if (userRepository.existsByPhoneNumber(normalizedPhone)) {
+            throw new RuntimeException("Phone number already exists");
         }
 
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
+        user.setPhoneNumber(normalizedPhone);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setDisplayName(request.getDisplayName());
         user.setStatus(org.example.enums.UserStatus.offline);
@@ -52,7 +60,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
+        String normalizedPhone = normalizePhone(request.getPhone());
+
+        User user = userRepository.findByPhoneNumber(normalizedPhone)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -86,5 +96,18 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(user);
 
         return new AuthResponse(user.getId(), user.getUsername(), token, newRefreshToken);
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null || phone.isBlank()) return null;
+        String cleaned = phone.replaceAll("[^\\d+]", "");
+        if (cleaned.startsWith("8") && cleaned.length() == 11) {
+            cleaned = "+7" + cleaned.substring(1);
+        } else if (cleaned.startsWith("7") && cleaned.length() == 11) {
+            cleaned = "+7" + cleaned.substring(1);
+        } else if (!cleaned.startsWith("+") && cleaned.length() == 11) {
+            cleaned = "+" + cleaned;
+        }
+        return cleaned;
     }
 }

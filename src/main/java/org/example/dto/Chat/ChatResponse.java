@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.example.dto.User.UserDTO;
 import org.example.enums.ChatType;
-
 import java.time.LocalDateTime;
 
 @Data
@@ -34,4 +33,8 @@ public class ChatResponse {
 
     @Schema(description = "Время последнего сообщения")
     private LocalDateTime lastMessageTime;
+
+    @Schema(description = "Чат закреплён", example = "false")
+    @com.fasterxml.jackson.annotation.JsonProperty("pinned")
+    private boolean isPinned;
 }

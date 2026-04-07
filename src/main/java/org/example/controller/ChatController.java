@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chats")
@@ -28,9 +29,19 @@ public class ChatController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping
-    public ResponseEntity<List<ChatResponse>> getLast100Chats() {
-        List<ChatResponse> response = chatService.getLast100Chats();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<ChatResponse>> getUserChats(HttpServletRequest request) {
+        String token = request.getHeader("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long userId = jwtTokenProvider.getUserIdFromToken(token.replace("Bearer ", ""));
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        List<ChatResponse> chats = chatService.getUserChats(userId);
+        return ResponseEntity.ok(chats);
     }
 
     @GetMapping("/{id}")
@@ -61,13 +72,34 @@ public class ChatController {
             return ResponseEntity.status(401).build();
         }
 
-        Long currentUserId = jwtTokenProvider.getUserIdFromToken(token);
+        Long currentUserId = jwtTokenProvider.getUserIdFromToken(token.replace("Bearer ", ""));
         if (currentUserId == null) {
             return ResponseEntity.status(401).build();
         }
 
         ChatResponse response = chatService.createChat(request, currentUserId);
         return ResponseEntity.status(201).body(response);
+    }
+
+    @PatchMapping("/{id}/pin")
+    @Operation(summary = "Закрепить/открепить чат")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Статус закреплённости изменён"),
+            @ApiResponse(responseCode = "404", description = "Чат не найден")
+    })
+    public ResponseEntity<ChatResponse> togglePin(
+            @Parameter(description = "ID чата", required = true, example = "1")
+            @PathVariable Long id,
+            @Parameter(description = "Статус закреплённости", required = true)
+            @RequestBody Map<String, Boolean> request) {
+
+        Boolean pinned = request.get("pinned");
+        if (pinned == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        ChatResponse response = chatService.togglePin(id, pinned);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")

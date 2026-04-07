@@ -19,4 +19,6 @@
     <include file="2026-01-28--0011-user_settings.xml" relativeToChangelogFile="true"/>
     <include file="2026-01-28--0012-sessions.xml" relativeToChangelogFile="true"/>
     <include file="2026-01-28--0013-chats_last_message_fk.xml" relativeToChangelogFile="true"/>
+    <include file="2026-04-03--0014-add-updated-at-to-attachments.xml" relativeToChangelogFile="true"/>
+    <include file="2026-04-03--0015-add-api-key-to-users.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

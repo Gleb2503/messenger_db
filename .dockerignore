@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Maven/Gradle
+target/
+!messenger-backend.jar          
+*.log
+pom.xml
+build.gradle
+
+# Локальные конфиги (они будут в .env или монтироваться)
+application*.properties
+*.key
+*.pem
+
+# Системные файлы
+*.swp
+*.swo
+*~
+
+# Документация
+README.md
+docs/
+
+# Тесты
+src/test/
