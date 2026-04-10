@@ -21,8 +21,10 @@ public interface ChatMemberRepository extends JpaRepository<ChatMember, Long> {
     void deleteByChatId(Long chatId);
 
 
+
     List<ChatMember> findTop100ByChatIdAndIsActiveTrueOrderByJoinedAtDesc(Long chatId);
 
+    List<ChatMember> findByChatIdAndIsActiveTrue(Long chatId);
 
     List<ChatMember> findTop100ByUserIdAndIsActiveTrueOrderByJoinedAtDesc(Long chatId);
 

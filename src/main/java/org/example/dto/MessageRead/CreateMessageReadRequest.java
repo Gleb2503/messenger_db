@@ -20,6 +20,9 @@ public class CreateMessageReadRequest {
     @Schema(description = "ID пользователя", example = "1", required = true)
     private Long userId;
 
+    @Schema(description = "ID чата", example = "1")
+    private Long chatId;
+
     public MessageRead toEntity() {
         MessageRead messageRead = new MessageRead();
 

@@ -22,6 +22,7 @@ public class MessageResponse {
     private UserDTO sender;
 
     @Schema(description = "Содержимое", example = "Привет всем!")
+    @com.fasterxml.jackson.annotation.JsonProperty("text")
     private String content;
 
     @Schema(description = "Тип сообщения", example = "text")
@@ -37,11 +38,19 @@ public class MessageResponse {
     private Boolean isDeleted;
 
     @Schema(description = "Статус доставки", example = "sent")
+    @com.fasterxml.jackson.annotation.JsonProperty("status")
     private DeliveryStatus deliveryStatus;
 
     @Schema(description = "Дата создания", example = "2026-03-08T10:00:00")
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     @Schema(description = "Дата обновления")
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("senderId")
+    public Long getSenderId() {
+        return sender != null ? sender.getId() : null;
+    }
 }

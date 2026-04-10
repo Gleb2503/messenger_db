@@ -21,4 +21,5 @@
     <include file="2026-01-28--0013-chats_last_message_fk.xml" relativeToChangelogFile="true"/>
     <include file="2026-04-03--0014-add-updated-at-to-attachments.xml" relativeToChangelogFile="true"/>
     <include file="2026-04-03--0015-add-api-key-to-users.xml" relativeToChangelogFile="true"/>
+    <include file="2026-04-10--0016-add-user-status-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

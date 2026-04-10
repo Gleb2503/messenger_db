@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -24,6 +25,19 @@ public class MessageController {
 
     private final MessageService messageService;
 
+
+    @GetMapping("/chat/{chatId}")
+    public ResponseEntity<List<MessageResponse>> getMessagesByChat(@PathVariable Long chatId) {
+        List<MessageResponse> response = messageService.getLast100MessagesByChat(chatId);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping(value = "/chats/{chatId}/messages", produces = "application/json")
+    public ResponseEntity<List<MessageResponse>> getMessagesByChatAlias(@PathVariable Long chatId) {
+        return getMessagesByChat(chatId);
+    }
+
     @GetMapping
     public ResponseEntity<List<MessageResponse>> getLast100Messages() {
         List<MessageResponse> response = messageService.getLast100Messages();
@@ -33,12 +47,6 @@ public class MessageController {
     @GetMapping("/{id}")
     public ResponseEntity<MessageResponse> getMessageById(@PathVariable Long id) {
         MessageResponse response = messageService.getMessageById(id);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/chat/{chatId}")
-    public ResponseEntity<List<MessageResponse>> getLast100MessagesByChat(@PathVariable Long chatId) {
-        List<MessageResponse> response = messageService.getLast100MessagesByChat(chatId);
         return ResponseEntity.ok(response);
     }
 

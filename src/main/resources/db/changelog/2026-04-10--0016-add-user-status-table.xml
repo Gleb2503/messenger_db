@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+
+    <changeSet id="2026-04-09-create-delivery-status-enum" author="messenger">
+        <sql>
+            DO $$ BEGIN
+            CREATE TYPE delivery_status AS ENUM ('sent', 'delivered', 'read', 'failed');
+            EXCEPTION
+            WHEN duplicate_object THEN null;
+            END $$;
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="2026-04-09-create-user-status-table" author="messenger">
+        <createTable tableName="user_status">
+            <column name="user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_user_status_user"
+                             references="users(id)" deleteCascade="true"/>
+            </column>
+            <column name="is_online" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_seen" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+        <createIndex tableName="user_status" indexName="idx_user_status_online">
+            <column name="is_online"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

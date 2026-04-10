@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -20,6 +21,8 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+
+        SimpMessageType messageType = accessor.getMessageType();
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authorization = accessor.getFirstNativeHeader("Authorization");
@@ -42,6 +45,8 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userId, null, null);
+
+
                 accessor.setUser(auth);
 
                 if (accessor.getSessionAttributes() != null) {
@@ -49,11 +54,24 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                     accessor.getSessionAttributes().put("username", username);
                 }
 
-                log.debug("WebSocket authenticated: userId={}, username={}", userId, username);
+                log.info("✅ WebSocket authenticated: userId={}, username={}", userId, username);
 
             } catch (Exception e) {
-                log.error("WebSocket authentication error: {}", e.getMessage(), e);
+                log.error("❌ WebSocket authentication error: {}", e.getMessage(), e);
                 return null;
+            }
+        }
+
+        else {
+            if (accessor.getUser() == null) {
+                log.warn("⚠️ Unauthenticated attempt: command={}, dest={}",
+                        accessor.getCommand(), accessor.getDestination());
+                return null;
+            }
+
+
+            if (accessor.getDestination() != null && accessor.getDestination().contains("user.status")) {
+                log.debug("📩 Passing message to destination: {}", accessor.getDestination());
             }
         }
 
