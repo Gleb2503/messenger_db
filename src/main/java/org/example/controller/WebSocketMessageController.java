@@ -102,8 +102,25 @@ public class WebSocketMessageController {
         }
     }
 
+
+
+    @MessageMapping("/user.status.request")
+    public void handleStatusRequest(@Payload UserStatusRequest request,
+                                    SimpMessageHeaderAccessor headerAccessor) {
+        Long requesterId = (Long) headerAccessor.getSessionAttributes().get("userId");
+        Long targetUserId = request.getUserId();
+
+        log.info("📥 Received /app/user.status.request: requester={}, target={}",
+                requesterId, targetUserId);
+
+        if (requesterId != null && targetUserId != null) {
+            userStatusService.handleStatusRequest(targetUserId, requesterId);
+        }
+    }
+
     @MessageMapping("/debug/**")
     public void debugStompMessages(@Payload(required = false) Object payload, Message<?> message) {
         log.debug("DEBUG: dest={}, payload={}", message.getHeaders().get("destination"), payload);
     }
+
 }
