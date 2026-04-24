@@ -14,6 +14,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
     List<Attachment> findTop100ByOrderByCreatedAtDesc();
 
+
     List<Attachment> findTop100ByMessageIdOrderByCreatedAtDesc(Long messageId);
 
     List<Attachment> findTop100ByMessageChatIdOrderByCreatedAtDesc(Long chatId);
@@ -29,4 +30,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
     boolean existsById(Long id);
     boolean existsByMessageId(Long messageId);
+
+    @Query("SELECT a FROM Attachment a WHERE a.message.id = :messageId ORDER BY a.createdAt ASC")
+    List<Attachment> findByMessageId(@Param("messageId") Long messageId);
 }

@@ -1,12 +1,16 @@
 package org.example.dto.Message;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.example.dto.Attachment.AttachmentResponse;
 import org.example.dto.Chat.ChatDTO;
 import org.example.dto.User.UserDTO;
-import org.example.enums.MessageType;
 import org.example.enums.DeliveryStatus;
+import org.example.enums.MessageType;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Schema(description = "Ответ с информацией о сообщении")
@@ -22,7 +26,7 @@ public class MessageResponse {
     private UserDTO sender;
 
     @Schema(description = "Содержимое", example = "Привет всем!")
-    @com.fasterxml.jackson.annotation.JsonProperty("text")
+    @JsonProperty("text")
     private String content;
 
     @Schema(description = "Тип сообщения", example = "text")
@@ -38,7 +42,7 @@ public class MessageResponse {
     private Boolean isDeleted;
 
     @Schema(description = "Статус доставки", example = "sent")
-    @com.fasterxml.jackson.annotation.JsonProperty("status")
+    @JsonProperty("status")
     private DeliveryStatus deliveryStatus;
 
     @Schema(description = "Дата создания", example = "2026-03-08T10:00:00")
@@ -49,7 +53,12 @@ public class MessageResponse {
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    @com.fasterxml.jackson.annotation.JsonProperty("senderId")
+
+    @Schema(description = "Вложения (изображения, видео, файлы)")
+    @JsonProperty("attachments")
+    private List<AttachmentResponse> attachments;
+
+    @JsonProperty("senderId")
     public Long getSenderId() {
         return sender != null ? sender.getId() : null;
     }

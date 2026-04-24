@@ -4,6 +4,7 @@ import org.example.dto.Attachment.AttachmentResponse;
 import org.example.dto.Attachment.CreateAttachmentRequest;
 import org.example.entity.Attachment;
 import org.example.entity.Message;
+import org.example.enums.MessageType;
 import org.example.exeption.ResourceNotFoundException;
 import org.example.repository.AttachmentRepository;
 import org.example.repository.ChatMemberRepository;
@@ -107,7 +108,8 @@ public class AttachmentService {
 
     @Transactional
     public AttachmentResponse createAttachment(CreateAttachmentRequest request, MultipartFile file, Long userId) {
-        log.info("Creating attachment: fileName={}, fileSize={}", request.getFileName(), request.getFileSize());
+        log.info("Creating attachment: fileName={}, fileSize={}, fileType={}",
+                request.getFileName(), request.getFileSize(), request.getFileType());
 
         String fileUrl;
         try {
@@ -120,16 +122,29 @@ public class AttachmentService {
         Attachment attachment = request.toEntity();
         attachment.setFileUrl(fileUrl.trim());
 
-        if (attachment.getMessage() != null && attachment.getMessage().getId() != null) {
-            Message message = messageRepository.findById(attachment.getMessage().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + attachment.getMessage().getId()));
+        if (request.getMessageId() != null) {
+            Message message = messageRepository.findById(request.getMessageId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + request.getMessageId()));
+
             attachment.setMessage(message);
+
+
+            String fileType = attachment.getFileType();
+            if (fileType != null && !fileType.isEmpty()) {
+                if (fileType.startsWith("image/")) {
+                    message.setMessageType(MessageType.image);
+                } else if (fileType.startsWith("video/")) {
+                    message.setMessageType(MessageType.video);
+                } else {
+                    message.setMessageType(MessageType.file);
+                }
+                messageRepository.save(message);
+                log.debug("Updated message {} type to {}", message.getId(), message.getMessageType());
+            }
         }
 
         attachment.setCreatedAt(LocalDateTime.now());
-
         Attachment saved = attachmentRepository.save(attachment);
-        log.info("Attachment saved: id={}", saved.getId());
 
         return convertToResponse(saved);
     }

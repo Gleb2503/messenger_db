@@ -5,10 +5,12 @@ import org.example.dto.Message.CreateMessageRequest;
 import org.example.dto.Chat.ChatDTO;
 import org.example.dto.User.UserDTO;
 import org.example.dto.Message.ReplyToDTO;
+import org.example.dto.Attachment.AttachmentResponse;
 import org.example.entity.Message;
 import org.example.entity.Chat;
 import org.example.entity.User;
 import org.example.entity.MessageRead;
+import org.example.entity.Attachment;
 import org.example.enums.MessageType;
 import org.example.enums.DeliveryStatus;
 import org.example.exeption.ResourceNotFoundException;
@@ -16,12 +18,14 @@ import org.example.repository.MessageRepository;
 import org.example.repository.ChatRepository;
 import org.example.repository.UserRepository;
 import org.example.repository.MessageReadsRepository;
+import org.example.repository.AttachmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,10 +39,12 @@ public class MessageService {
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
     private final MessageReadsRepository messageReadsRepository;
+    private final AttachmentRepository attachmentRepository;
 
-    public List<MessageResponse> getLast100Messages() {
-        return messageRepository.findTop100ByOrderByCreatedAtDesc()
-                .stream()
+    public List<MessageResponse> getLast100MessagesByChat(Long chatId) {
+        List<Message> messages = messageRepository.findTop100ByChatIdOrderByCreatedAtDesc(chatId);
+        Collections.reverse(messages);
+        return messages.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
@@ -49,15 +55,15 @@ public class MessageService {
         return convertToResponse(message);
     }
 
-    public List<MessageResponse> getLast100MessagesByChat(Long chatId) {
-        return messageRepository.findTop100ByChatIdOrderByCreatedAtAsc(chatId)
+    public List<MessageResponse> getLast100MessagesBySender(Long senderId) {
+        return messageRepository.findTop100BySenderIdOrderByCreatedAtDesc(senderId)
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<MessageResponse> getLast100MessagesBySender(Long senderId) {
-        return messageRepository.findTop100BySenderIdOrderByCreatedAtDesc(senderId)
+    public List<MessageResponse> getLast100Messages() {
+        return messageRepository.findTop100ByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
@@ -159,6 +165,7 @@ public class MessageService {
         return true;
     }
 
+
     private MessageResponse convertToResponse(Message message) {
         MessageResponse response = new MessageResponse();
         response.setId(message.getId());
@@ -195,6 +202,29 @@ public class MessageService {
             ));
         }
 
+
+        List<Attachment> attachments = attachmentRepository.findByMessageId(message.getId());
+        if (!attachments.isEmpty()) {
+            response.setAttachments(
+                    attachments.stream()
+                            .map(this::convertAttachmentToResponse)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return response;
+    }
+
+
+    private AttachmentResponse convertAttachmentToResponse(Attachment attachment) {
+        AttachmentResponse response = new AttachmentResponse();
+        response.setId(attachment.getId());
+        response.setFileUrl(attachment.getFileUrl());
+        response.setFileName(attachment.getFileName());
+        response.setFileSize(attachment.getFileSize());
+        response.setFileType(attachment.getFileType());
+        response.setThumbnailUrl(attachment.getThumbnailUrl());
+        response.setCreatedAt(attachment.getCreatedAt());
         return response;
     }
 }

@@ -144,6 +144,6 @@ public class UserStatusService {
 
     public void onUserDisconnected(Long userId) {
         log.info("🔌 User disconnected: {}", userId);
-        updateStatus(userId, false);
+
     }
 }
