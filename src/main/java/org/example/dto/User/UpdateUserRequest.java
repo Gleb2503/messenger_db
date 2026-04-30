@@ -1,6 +1,7 @@
 package org.example.dto.User;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -21,4 +22,9 @@ public class UpdateUserRequest {
     @Size(max = 255, message = "AvatarUrl не может превышать 255 символов")
     @Schema(description = "URL аватара", example = "https://example.com/avatar.jpg")
     private String avatarUrl;
+
+    @Email(message = "Некорректный формат email")
+    @Size(max = 100, message = "Email не может превышать 100 символов")
+    @Schema(description = "Email пользователя", example = "user@example.com")
+    private String email;
 }

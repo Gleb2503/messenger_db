@@ -71,6 +71,9 @@ public class UserService {
         if (request.getAvatarUrl() != null) {
             existing.setAvatarUrl(request.getAvatarUrl());
         }
+        if (request.getEmail() != null) {
+            existing.setEmail(request.getEmail());
+        }
 
         existing.setUpdatedAt(LocalDateTime.now());
         User updated = userRepository.save(existing);
