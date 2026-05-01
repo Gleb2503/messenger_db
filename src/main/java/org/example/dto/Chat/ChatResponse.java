@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @Data
 @Schema(description = "Ответ с информацией о чате")
 public class ChatResponse {
-
     @Schema(description = "ID чата", example = "1")
     private Long id;
 
@@ -24,6 +23,9 @@ public class ChatResponse {
 
     @Schema(description = "Создатель")
     private UserDTO createdBy;
+
+    @Schema(description = "Собеседник (для личных чатов)")
+    private UserDTO partner;
 
     @Schema(description = "Дата создания", example = "2026-03-08T10:00:00")
     private LocalDateTime createdAt;

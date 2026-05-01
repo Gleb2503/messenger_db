@@ -104,7 +104,8 @@ public class ContactService {
             response.setUser(new UserDTO(
                     contact.getUser().getId(),
                     contact.getUser().getUsername(),
-                    contact.getUser().getEmail()
+                    contact.getUser().getEmail(),
+                    contact.getUser().getAvatarUrl()
             ));
         }
 
@@ -112,7 +113,8 @@ public class ContactService {
             response.setContactUser(new UserDTO(
                     contact.getContactUser().getId(),
                     contact.getContactUser().getUsername(),
-                    contact.getContactUser().getEmail()
+                    contact.getContactUser().getEmail(),
+                    contact.getContactUser().getAvatarUrl()
             ));
         }
 

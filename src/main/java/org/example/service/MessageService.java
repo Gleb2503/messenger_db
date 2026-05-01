@@ -185,7 +185,8 @@ public class MessageService {
             response.setSender(new UserDTO(
                     message.getSender().getId(),
                     message.getSender().getUsername(),
-                    message.getSender().getEmail()
+                    message.getSender().getEmail(),
+                    message.getSender().getAvatarUrl()
             ));
         }
 
@@ -193,7 +194,8 @@ public class MessageService {
             UserDTO replySender = new UserDTO(
                     message.getReplyTo().getSender().getId(),
                     message.getReplyTo().getSender().getUsername(),
-                    message.getReplyTo().getSender().getEmail()
+                    message.getReplyTo().getSender().getEmail(),
+                    message.getReplyTo().getSender().getAvatarUrl()
             );
             response.setReplyTo(new ReplyToDTO(
                     message.getReplyTo().getId(),

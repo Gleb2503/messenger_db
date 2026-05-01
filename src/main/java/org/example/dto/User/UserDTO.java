@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "Информация о пользователе")
 public class UserDTO {
-
     @Schema(description = "ID пользователя", example = "1")
     private Long id;
 
@@ -19,4 +18,7 @@ public class UserDTO {
 
     @Schema(description = "Email", example = "ivan@example.com")
     private String email;
+
+    @Schema(description = "URL аватара", example = "https://example.com/avatar.jpg")
+    private String avatarUrl;
 }

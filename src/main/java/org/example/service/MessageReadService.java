@@ -87,7 +87,8 @@ public class MessageReadService {
             response.setUser(new UserDTO(
                     read.getUser().getId(),
                     read.getUser().getUsername(),
-                    read.getUser().getEmail()
+                    read.getUser().getEmail(),
+                    read.getUser().getAvatarUrl()
             ));
         }
 

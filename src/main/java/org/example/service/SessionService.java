@@ -96,7 +96,8 @@ public class SessionService {
             response.setUser(new UserDTO(
                     session.getUser().getId(),
                     session.getUser().getUsername(),
-                    session.getUser().getEmail()
+                    session.getUser().getEmail(),
+                    session.getUser().getAvatarUrl()
             ));
         }
 

@@ -93,7 +93,8 @@ public class ReactionService {
             response.setUser(new UserDTO(
                     reaction.getUser().getId(),
                     reaction.getUser().getUsername(),
-                    reaction.getUser().getEmail()
+                    reaction.getUser().getEmail(),
+                    reaction.getUser().getAvatarUrl()
             ));
         }
 

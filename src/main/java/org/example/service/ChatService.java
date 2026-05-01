@@ -30,7 +30,6 @@ public class ChatService {
 
     public List<ChatResponse> getUserChats(Long userId) {
         List<ChatMember> activeMembers = memberRepository.findTop100ByUserIdAndIsActiveTrueOrderByJoinedAtDesc(userId);
-
         return activeMembers.stream()
                 .map(member -> convertToResponse(member.getChat(), userId))
                 .collect(Collectors.toList());
@@ -59,7 +58,6 @@ public class ChatService {
     @Transactional
     public ChatResponse createChat(CreateChatRequest request, Long currentUserId) {
         ChatType type = ChatType.valueOf(request.getType());
-
         if (type == ChatType.private_chat) {
             return createPrivateChat(request.getParticipantPhone(), currentUserId);
         } else if (type == ChatType.group || type == ChatType.channel) {
@@ -75,8 +73,7 @@ public class ChatService {
         }
 
         User targetUser = userRepository.findByPhoneNumber(participantPhone)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Пользователь с телефоном " + participantPhone + " не найден"));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь с телефоном " + participantPhone + " не найден"));
 
         if (targetUser.getId().equals(currentUserId)) {
             throw new IllegalArgumentException("Нельзя создать чат с самим собой");
@@ -99,7 +96,6 @@ public class ChatService {
         chat.setCreatedBy(creator);
 
         Chat savedChat = chatRepository.save(chat);
-
         addMember(savedChat, creator);
         addMember(savedChat, targetUser);
 
@@ -123,7 +119,6 @@ public class ChatService {
         chat.setCreatedBy(creator);
 
         Chat savedChat = chatRepository.save(chat);
-
         addMember(savedChat, creator);
 
         return convertToResponse(savedChat, currentUserId);
@@ -189,7 +184,6 @@ public class ChatService {
         response.setLastMessageTime(chat.getLastMessageTime());
         response.setPinned(chat.isPinned());
 
-
         if (ChatType.private_chat.equals(chat.getType()) && currentUserId != null) {
             String partnerName = findPartnerName(chat.getId(), currentUserId);
             response.setName(partnerName != null ? partnerName : chat.getName());
@@ -201,22 +195,42 @@ public class ChatService {
             response.setCreatedBy(new UserDTO(
                     chat.getCreatedBy().getId(),
                     chat.getCreatedBy().getUsername(),
-                    chat.getCreatedBy().getEmail()
+                    chat.getCreatedBy().getEmail(),
+                    chat.getCreatedBy().getAvatarUrl()
             ));
+        }
+
+        if (ChatType.private_chat.equals(chat.getType()) && currentUserId != null) {
+            User partner = findPartnerUser(chat.getId(), currentUserId);
+            if (partner != null) {
+                response.setPartner(new UserDTO(
+                        partner.getId(),
+                        partner.getUsername(),
+                        partner.getEmail(),
+                        partner.getAvatarUrl()
+                ));
+            }
         }
 
         return response;
     }
 
-
     private String findPartnerName(Long chatId, Long currentUserId) {
         List<ChatMember> members = memberRepository.findByChatIdAndIsActiveTrue(chatId);
-
         for (ChatMember member : members) {
             if (!member.getUser().getId().equals(currentUserId)) {
                 return member.getUser().getUsername();
             }
         }
         return null;
+    }
+
+    private User findPartnerUser(Long chatId, Long currentUserId) {
+        List<ChatMember> members = memberRepository.findByChatIdAndIsActiveTrue(chatId);
+        return members.stream()
+                .map(ChatMember::getUser)
+                .filter(user -> !user.getId().equals(currentUserId))
+                .findFirst()
+                .orElse(null);
     }
 }

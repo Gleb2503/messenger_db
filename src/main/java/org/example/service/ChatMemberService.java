@@ -107,7 +107,8 @@ public class ChatMemberService {
             response.setUser(new UserDTO(
                     member.getUser().getId(),
                     member.getUser().getUsername(),
-                    member.getUser().getEmail()
+                    member.getUser().getEmail(),
+                    member.getUser().getAvatarUrl()
             ));
         }
 

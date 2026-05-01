@@ -102,7 +102,8 @@ public class NotificationService {
             response.setUser(new UserDTO(
                     notification.getUser().getId(),
                     notification.getUser().getUsername(),
-                    notification.getUser().getEmail()
+                    notification.getUser().getEmail(),
+                    notification.getUser().getAvatarUrl()
             ));
         }
 
