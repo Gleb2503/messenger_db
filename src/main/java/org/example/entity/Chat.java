@@ -1,6 +1,7 @@
 package org.example.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,6 +38,8 @@ public class Chat {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDateTime lastMessageTime;
 
     @Column(name = "is_pinned")

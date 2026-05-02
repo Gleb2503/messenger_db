@@ -181,7 +181,15 @@ public class ChatService {
         response.setAvatarUrl(chat.getAvatarUrl());
         response.setCreatedAt(chat.getCreatedAt());
         response.setUpdatedAt(chat.getUpdatedAt());
-        response.setLastMessageTime(chat.getLastMessageTime());
+
+        if (chat.getLastMessageTime() != null) {
+            response.setLastMessageTime(chat.getLastMessageTime());
+        } else if (chat.getUpdatedAt() != null) {
+            response.setLastMessageTime(chat.getUpdatedAt());
+        } else {
+            response.setLastMessageTime(chat.getCreatedAt());
+        }
+
         response.setPinned(chat.isPinned());
 
         if (ChatType.private_chat.equals(chat.getType()) && currentUserId != null) {

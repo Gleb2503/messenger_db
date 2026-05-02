@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dto.Auth.AuthResponse;
 import org.example.dto.Auth.LoginRequest;
 import org.example.dto.Auth.RegisterRequest;
+import org.example.dto.Auth.RefreshTokenRequest;
 import org.example.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
 @RestController
@@ -99,18 +99,24 @@ public class AuthController {
     @Operation(summary = "Обновление access-токена")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Токен обновлён"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
             @ApiResponse(responseCode = "401", description = "Неверный refresh токен")
     })
     public ResponseEntity<AuthResponse> refresh(
-            @Parameter(description = "Refresh токен", required = true)
-            @RequestParam String refreshToken) {
+            @Parameter(description = "Запрос с refresh токеном", required = true)
+            @Valid @RequestBody RefreshTokenRequest request) {
+
         log.info("Refresh token request received");
+
         try {
-            AuthResponse response = authService.refreshToken(refreshToken);
+            AuthResponse response = authService.refreshToken(request.getRefreshToken());
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Refresh failed: {}", e.getMessage());
             return ResponseEntity.status(401).build();
+        } catch (Exception e) {
+            log.error("Unexpected error during refresh: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
         }
     }
 

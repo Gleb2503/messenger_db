@@ -32,7 +32,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
             if (authorization == null || !authorization.startsWith("Bearer ")) {
                 log.warn("❌ WebSocket CONNECT without Authorization header");
-                return null; // Отклоняем подключение
+                return null;
             }
 
             String token = authorization.substring(7);
@@ -72,7 +72,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                         accessor.getCommand(),
                         accessor.getDestination(),
                         accessor.getSessionAttributes());
-                return null; // Отклоняем неавторизованные команды
+                return null;
             }
         }
 

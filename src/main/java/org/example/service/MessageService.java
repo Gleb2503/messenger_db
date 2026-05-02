@@ -106,6 +106,9 @@ public class MessageService {
         message.setUpdatedAt(LocalDateTime.now());
 
         Message saved = messageRepository.save(message);
+
+        updateChatLastMessageTime(saved.getChat(), saved.getCreatedAt());
+
         return convertToResponse(saved);
     }
 
@@ -124,15 +127,40 @@ public class MessageService {
         existing.setUpdatedAt(LocalDateTime.now());
 
         Message updated = messageRepository.save(existing);
+
+        Chat chat = updated.getChat();
+        if (chat != null) {
+            messageRepository.findTopByChatIdOrderByCreatedAtDesc(chat.getId())
+                    .ifPresent(lastMsg -> {
+                        if (lastMsg.getId().equals(updated.getId())) {
+                            updateChatLastMessageTime(chat, updated.getUpdatedAt());
+                        }
+                    });
+        }
+
         return convertToResponse(updated);
     }
 
     @Transactional
     public void deleteMessage(Long id) {
-        if (!messageRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Message not found with id: " + id);
-        }
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + id));
+        Chat chat = message.getChat();
+
         messageRepository.deleteById(id);
+
+        if (chat != null) {
+            messageRepository.findTopByChatIdOrderByCreatedAtDesc(chat.getId())
+                    .ifPresent(lastMsg -> updateChatLastMessageTime(chat, lastMsg.getCreatedAt()));
+        }
+    }
+
+    private void updateChatLastMessageTime(Chat chat, LocalDateTime time) {
+        if (chat != null && time != null) {
+            chat.setLastMessageTime(time);
+            chatRepository.save(chat);
+            chatRepository.flush();
+        }
     }
 
     @Transactional
@@ -164,7 +192,6 @@ public class MessageService {
         log.info("Saved to message_reads: messageId={}, userId={}", messageId, userId);
         return true;
     }
-
 
     private MessageResponse convertToResponse(Message message) {
         MessageResponse response = new MessageResponse();
@@ -204,7 +231,6 @@ public class MessageService {
             ));
         }
 
-
         List<Attachment> attachments = attachmentRepository.findByMessageId(message.getId());
         if (!attachments.isEmpty()) {
             response.setAttachments(
@@ -216,7 +242,6 @@ public class MessageService {
 
         return response;
     }
-
 
     private AttachmentResponse convertAttachmentToResponse(Attachment attachment) {
         AttachmentResponse response = new AttachmentResponse();
