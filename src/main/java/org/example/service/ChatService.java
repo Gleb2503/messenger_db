@@ -5,11 +5,14 @@ import org.example.dto.Chat.CreateChatRequest;
 import org.example.dto.User.UserDTO;
 import org.example.entity.Chat;
 import org.example.entity.ChatMember;
+import org.example.entity.Message;
 import org.example.entity.User;
 import org.example.enums.ChatType;
+import org.example.enums.MessageType;
 import org.example.exeption.ResourceNotFoundException;
 import org.example.repository.ChatRepository;
 import org.example.repository.ChatMemberRepository;
+import org.example.repository.MessageRepository;
 import org.example.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,9 +31,11 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final UserRepository userRepository;
     private final ChatMemberRepository memberRepository;
+    private final MessageRepository messageRepository;
 
     public List<ChatResponse> getUserChats(Long userId) {
-        List<ChatMember> activeMembers = memberRepository.findTop100ByUserIdAndIsActiveTrueOrderByJoinedAtDesc(userId);
+        List<ChatMember> activeMembers = memberRepository
+                .findTop100ByUserIdAndIsActiveTrueOrderByJoinedAtDesc(userId);
         return activeMembers.stream()
                 .map(member -> convertToResponse(member.getChat(), userId))
                 .collect(Collectors.toList());
@@ -174,6 +180,40 @@ public class ChatService {
         chatRepository.deleteById(id);
     }
 
+
+    private String fetchLastMessageText(Long chatId) {
+        Optional<Message> lastMsgOpt = messageRepository.findTopByChatIdOrderByCreatedAtDesc(chatId);
+
+        if (lastMsgOpt.isEmpty()) {
+            return null;
+        }
+
+        Message msg = lastMsgOpt.get();
+        MessageType msgType = msg.getMessageType();
+
+
+        if (msgType != null && msgType != MessageType.text) {
+            switch (msgType) {
+                case image: return "📷 Фотография";
+                case video: return "🎬 Видео";
+                case file: return "📎 Файл";
+                case audio: return "🎵 Аудиосообщение";
+                default: return "📎 Вложение";
+            }
+        }
+
+        String content = msg.getContent();
+        if (content == null || content.isEmpty()) {
+            return null;
+        }
+
+
+        if (content.length() > 60) {
+            return content.substring(0, 60) + "…";
+        }
+        return content;
+    }
+
     private ChatResponse convertToResponse(Chat chat, Long currentUserId) {
         ChatResponse response = new ChatResponse();
         response.setId(chat.getId());
@@ -192,12 +232,17 @@ public class ChatService {
 
         response.setPinned(chat.isPinned());
 
+
+        response.setLastMessage(fetchLastMessageText(chat.getId()));
+
+
         if (ChatType.private_chat.equals(chat.getType()) && currentUserId != null) {
             String partnerName = findPartnerName(chat.getId(), currentUserId);
             response.setName(partnerName != null ? partnerName : chat.getName());
         } else {
             response.setName(chat.getName());
         }
+
 
         if (chat.getCreatedBy() != null) {
             response.setCreatedBy(new UserDTO(
@@ -207,6 +252,7 @@ public class ChatService {
                     chat.getCreatedBy().getAvatarUrl()
             ));
         }
+
 
         if (ChatType.private_chat.equals(chat.getType()) && currentUserId != null) {
             User partner = findPartnerUser(chat.getId(), currentUserId);

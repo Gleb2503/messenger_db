@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @Schema(description = "Ответ с информацией о чате")
 public class ChatResponse {
+
     @Schema(description = "ID чата", example = "1")
     private Long id;
 
@@ -39,4 +40,8 @@ public class ChatResponse {
     @Schema(description = "Чат закреплён", example = "false")
     @com.fasterxml.jackson.annotation.JsonProperty("pinned")
     private boolean isPinned;
+
+
+    @Schema(description = "Текст последнего сообщения", example = "Привет, как дела?")
+    private String lastMessage;
 }
