@@ -181,7 +181,7 @@ public class ChatService {
     }
 
 
-    private String fetchLastMessageText(Long chatId) {
+    private String formatLastMessage(Long chatId, Long currentUserId) {
         Optional<Message> lastMsgOpt = messageRepository.findTopByChatIdOrderByCreatedAtDesc(chatId);
 
         if (lastMsgOpt.isEmpty()) {
@@ -192,26 +192,35 @@ public class ChatService {
         MessageType msgType = msg.getMessageType();
 
 
+        String messageText;
         if (msgType != null && msgType != MessageType.text) {
             switch (msgType) {
-                case image: return "📷 Фотография";
-                case video: return "🎬 Видео";
-                case file: return "📎 Файл";
-                case audio: return "🎵 Аудиосообщение";
-                default: return "📎 Вложение";
+                case image: messageText = "📷 Фотография"; break;
+                case video: messageText = "🎬 Видео"; break;
+                case file: messageText = "📎 Файл"; break;
+                case audio: messageText = "🎵 Аудиосообщение"; break;
+                default: messageText = "📎 Вложение"; break;
+            }
+        } else {
+            String content = msg.getContent();
+            if (content == null || content.isEmpty()) {
+                return null;
+            }
+            messageText = content.length() > 60 ? content.substring(0, 60) + "…" : content;
+        }
+
+
+        if (msg.getSender() != null) {
+            Long senderId = msg.getSender().getId();
+            if (senderId != null && senderId.equals(currentUserId)) {
+                return "Вы: " + messageText;
+            } else {
+                String senderName = msg.getSender().getUsername();
+                return (senderName != null && !senderName.isEmpty() ? senderName : "Собеседник") + ": " + messageText;
             }
         }
 
-        String content = msg.getContent();
-        if (content == null || content.isEmpty()) {
-            return null;
-        }
-
-
-        if (content.length() > 60) {
-            return content.substring(0, 60) + "…";
-        }
-        return content;
+        return messageText;
     }
 
     private ChatResponse convertToResponse(Chat chat, Long currentUserId) {
@@ -232,9 +241,7 @@ public class ChatService {
 
         response.setPinned(chat.isPinned());
 
-
-        response.setLastMessage(fetchLastMessageText(chat.getId()));
-
+        response.setLastMessage(formatLastMessage(chat.getId(), currentUserId));
 
         if (ChatType.private_chat.equals(chat.getType()) && currentUserId != null) {
             String partnerName = findPartnerName(chat.getId(), currentUserId);
