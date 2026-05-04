@@ -21,6 +21,8 @@ import org.example.repository.MessageReadsRepository;
 import org.example.repository.AttachmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -191,6 +193,23 @@ public class MessageService {
 
         log.info("Saved to message_reads: messageId={}, userId={}", messageId, userId);
         return true;
+    }
+    public List<MessageResponse> getMessagesPaginated(Long chatId, Long beforeId, int size) {
+        PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
+
+        List<Message> messages;
+        if (beforeId != null) {
+            messages = messageRepository.findMessagesBefore(chatId, beforeId, pageRequest);
+        } else {
+            messages = messageRepository.findFirstPageByChatId(chatId, pageRequest);
+        }
+
+
+        Collections.reverse(messages);
+
+        return messages.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
     private MessageResponse convertToResponse(Message message) {

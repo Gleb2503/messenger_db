@@ -27,15 +27,23 @@ public class MessageController {
 
 
     @GetMapping("/chat/{chatId}")
-    public ResponseEntity<List<MessageResponse>> getMessagesByChat(@PathVariable Long chatId) {
-        List<MessageResponse> response = messageService.getLast100MessagesByChat(chatId);
+    public ResponseEntity<List<MessageResponse>> getMessagesByChat(
+            @PathVariable Long chatId,
+            @RequestParam(required = false) Long beforeId,
+            @RequestParam(defaultValue = "50") int size) {
+
+        List<MessageResponse> response = messageService.getMessagesPaginated(chatId, beforeId, size);
         return ResponseEntity.ok(response);
     }
 
 
     @GetMapping(value = "/chats/{chatId}/messages", produces = "application/json")
-    public ResponseEntity<List<MessageResponse>> getMessagesByChatAlias(@PathVariable Long chatId) {
-        return getMessagesByChat(chatId);
+    public ResponseEntity<List<MessageResponse>> getMessagesByChatAlias(
+            @PathVariable Long chatId,
+            @RequestParam(required = false) Long beforeId,
+            @RequestParam(defaultValue = "50") int size) {
+
+        return getMessagesByChat(chatId, beforeId, size);
     }
 
     @GetMapping
