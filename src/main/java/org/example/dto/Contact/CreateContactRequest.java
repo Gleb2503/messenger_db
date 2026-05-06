@@ -1,7 +1,7 @@
 package org.example.dto.Contact;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;  // ✅ Импорт должен быть!
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.example.entity.Contact;
