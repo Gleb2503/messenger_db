@@ -48,6 +48,15 @@ public class UserService {
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
+    public List<UserResponse> searchUsersByPhone(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return List.of();
+        }
+        return userRepository.findByPhoneNumber(phone)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {

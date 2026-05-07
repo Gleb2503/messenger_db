@@ -63,6 +63,19 @@ public class UserController {
         List<UserResponse> response = userService.searchUsersByUsername(username);
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/search/phone")
+    @Operation(summary = "Поиск пользователя по номеру телефона")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
+    public ResponseEntity<List<UserResponse>> searchUsersByPhone(
+            @Parameter(description = "Номер телефона", required = true, example = "+79159457571")
+            @RequestParam String phone) {
+
+        List<UserResponse> response = userService.searchUsersByPhone(phone);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     @Operation(summary = "Создать пользователя")
